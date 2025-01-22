@@ -6,7 +6,7 @@
 
 #include "myshared_ptr.hpp"
 #include "MyVector.hpp"
-
+#include "lock.hpp"
 
 using std::chrono::system_clock;
 
@@ -192,21 +192,21 @@ void tese_def() {
 void test_myshared_ptr()
 {
     std::cout << "=======test_myshared_ptr========" << std::endl;
-    shared_ptr<int> p1(new int(10));
+    my_shared_ptr<int> p1(new int(10));
     std::cout << *p1.get() << std::endl;
     std::cout<< p1.use_count() <<std::endl;
 
-    shared_ptr<int> p2 = p1;
-    shared_ptr<int> p3;
+    my_shared_ptr<int> p2 = p1;
+    my_shared_ptr<int> p3;
     p3 = p2;
-    shared_ptr<int> p4 = std::move(p3);
+    my_shared_ptr<int> p4 = std::move(p3);
     std::cout<< p4.use_count() <<std::endl;
 
-    shared_ptr<int> p5(new int(100));
+    my_shared_ptr<int> p5(new int(100));
     p5 = std::move(p4);
     std::cout<< p5.use_count() <<std::endl;
 
-    shared_ptr<std::string> s1(new  std::string("hell0000000000000000o"));
+    my_shared_ptr<std::string> s1(new  std::string("hell0000000000000000o"));
     std::cout << s1->size() << std::endl;
 
 }
@@ -250,7 +250,9 @@ int main() {
 
   //  test_myshared_ptr();
 
-    test_vector();
+    // test_vector();
+
+    test_lock();
 
     return 0;
 }

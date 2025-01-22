@@ -27,23 +27,23 @@ private:
 };
 
 template<typename T>
-class shared_ptr {
+class my_shared_ptr {
 public:
     // 默认构造函数
-    shared_ptr() : ptr_(nullptr), ref_count_(nullptr) {}
+    my_shared_ptr() : ptr_(nullptr), ref_count_(nullptr) {}
 
     // 构造函数，接受一个指向对象的指针
-    explicit shared_ptr(T* ptr) : ptr_(ptr), ref_count_(new RefCount<T>(ptr)) {}
+    explicit my_shared_ptr(T* ptr) : ptr_(ptr), ref_count_(new RefCount<T>(ptr)) {}
 
     // 拷贝构造函数
-    shared_ptr(const shared_ptr& other) : ptr_(other.ptr_), ref_count_(other.ref_count_) {
+    my_shared_ptr(const my_shared_ptr& other) : ptr_(other.ptr_), ref_count_(other.ref_count_) {
         if (ref_count_) {
             ref_count_->addRef();
         }
     }
 
     // 拷贝赋值运算符
-    shared_ptr& operator=(const shared_ptr& other) {
+    my_shared_ptr& operator=(const my_shared_ptr& other) {
         if (this != &other) {
             if (ref_count_ && ref_count_->release() == 0) {
                 delete ptr_;
@@ -59,7 +59,7 @@ public:
     }
 
     // 析构函数
-    ~shared_ptr() {
+    ~my_shared_ptr() {
         if (ref_count_ && ref_count_->release() == 0) {
             delete ptr_;
             delete ref_count_;
