@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #define port 8888
 

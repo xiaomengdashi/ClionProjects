@@ -3,9 +3,12 @@
 #include <thread>
 #include <vector>
 #include <string>
+#include <numeric>
 
 #include "myshared_ptr.hpp"
 #include "MyVector.hpp"
+#include "list.hpp"
+#include "algorithm.hpp"
 #include "lock.hpp"
 
 using std::chrono::system_clock;
@@ -252,7 +255,12 @@ int main() {
 
     // test_vector();
 
-    test_lock();
+  //  test_lock();
 
+
+
+   // algorithm_test();
+
+    list_test();
     return 0;
 }
