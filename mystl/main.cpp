@@ -10,6 +10,7 @@
 #include "list.hpp"
 #include "algorithm.hpp"
 #include "lock.hpp"
+#include "task.hpp"
 
 using std::chrono::system_clock;
 
@@ -261,6 +262,8 @@ int main() {
 
    // algorithm_test();
 
-    list_test();
+    // list_test();
+    // vector_test();
+    task_test();
     return 0;
 }

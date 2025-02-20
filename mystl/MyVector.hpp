@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <stdexcept>
 
@@ -5,7 +6,7 @@
 template <typename T>
 class MyVectorIterator {
 public:
-    MyVectorIterator(T* ptr) : ptr_(ptr) {}
+    explicit MyVectorIterator(T* ptr) : ptr_(ptr) {}
 
     T& operator*() const {
         return *ptr_;
@@ -45,7 +46,7 @@ public:
     MyVector() : size_(0), capacity_(0), data_(nullptr) {}
 
     // 构造函数，指定初始容量
-    explicit MyVector(size_t capacity) : size_(0), capacity_(capacity), data_(new T[capacity]) {}
+    explicit MyVector(const size_t capacity) : size_(0), capacity_(capacity), data_(new T[capacity]) {}
 
     // 拷贝构造函数
     MyVector(const MyVector& other) : size_(other.size_), capacity_(other.capacity_), data_(new T[other.capacity_]) {
@@ -151,7 +152,7 @@ private:
     T* data_;           // 存储元素的数组
 
     // 调整容量
-    void reserve(size_t new_capacity) {
+    void reserve(const size_t new_capacity) {
         if (new_capacity > capacity_) {
             T* new_data = new T[new_capacity];
             for (size_t i = 0; i < size_; ++i) {

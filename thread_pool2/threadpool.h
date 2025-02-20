@@ -10,7 +10,7 @@
 template <typename T>
 class BlockingQueue {
 public:
-    explicit BlockingQueue(bool nonblock = false) : nonblock_(nonblock) {}
+    BlockingQueue(bool nonblock = false) : nonblock_(nonblock) {}
     // 入队操作
     void Push(const T &value) {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -46,7 +46,7 @@ private:
 template <typename T>
 class BlockingQueuePro {
 public:
-    explicit BlockingQueuePro(bool nonblock = false) : nonblock_(nonblock) {}
+    BlockingQueuePro(bool nonblock = false) : nonblock_(nonblock) {}
     // 入队操作
     void Push(const T &value) {
         std::lock_guard<std::mutex> lock(producer_mutex_);

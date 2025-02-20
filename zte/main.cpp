@@ -5,6 +5,7 @@
 // 策略接口
 class Strategy {
 public:
+    virtual ~Strategy() {}
     virtual void execute() = 0; // 纯虚函数
 };
 
@@ -42,8 +43,8 @@ public:
 
 
 struct Student {
-    unsigned int id {};
-    std::string name {};
+    unsigned int id;
+    std::string name;
 
     unsigned int get_id() const {
         return id;
@@ -70,6 +71,14 @@ int main() {
     the_student.name = "张三";
     std::cout << the_student.name << std::endl;
 
+
+
+    int a = 1;
+    float b = a;
+
+    double c = 33.5e39;
+
+    b = c;
 
     return 0;
 }
