@@ -10,6 +10,7 @@
 #include "list.hpp"
 #include "algorithm.hpp"
 #include "lock.hpp"
+#include "vector.hpp"
 #include "MyAllocator.hpp"
 
 
@@ -155,6 +156,26 @@ private:
     int *m{};
 };
 
+class B {
+public:
+    B() {
+        std::cout << "B()" << std::endl;
+    }
+    B(const B& other) {
+        std::cout << "B(const B&)" << std::endl;
+    }
+    B(B&& other) noexcept {
+        std::cout << "B(B&&)" << std::endl;
+    }
+    ~B() {
+        std::cout << "~B()" << std::endl;
+    }
+
+    void print() {
+        std::cout << "print()" << std::endl;
+    }
+
+};
 
 class MyClass {
 public:
@@ -185,6 +206,18 @@ void test_A() {
     A e = A(new int(1));
     A f = A(new int(1));
     d = f;
+    A* g = new A;
+    delete g;
+    A* h = new A();
+    delete h;
+}
+
+void test_B() {
+    B *b = nullptr;
+    std::cout <<"BBBBBBBBBB"<< std::endl;
+    std::cout << &b << std::endl;
+    std::cout << sizeof(*b)<< std::endl;
+    b->print();
 }
 
 void tese_def() {
@@ -274,7 +307,9 @@ int main() {
 
    // algorithm_test();
 
-
+    list_test();
+    vector_test();
+    test_B();
     test_myallocator();
 
     return 0;

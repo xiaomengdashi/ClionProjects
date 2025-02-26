@@ -1,6 +1,6 @@
 
 #include <vector>
-
+#include <algorithm>
 
 void _display(std::random_access_iterator_tag) {
     std::cout << "Random Access Iterator" << std::endl;
@@ -60,7 +60,7 @@ inline void algorithm_test()
 
     std::cout << std::accumulate(vec.begin(), vec.end(), 0) << std::endl;
 
-    for_each(vec.begin(), vec.end(), [](int i)
+    std::for_each(vec.begin(), vec.end(), [](int i)
       {
             std::cout << i << std::endl;
       });

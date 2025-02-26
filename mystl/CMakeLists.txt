@@ -8,8 +8,9 @@ add_executable(mystl
         myshared_ptr.hpp
         MyVector.hpp
         lock.hpp
-        stack.hpp
+        threadsafe_stack.hpp
         mutex.hpp
         algorithm.hpp
         list.hpp
+        vector.hpp
 )
