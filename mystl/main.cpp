@@ -10,7 +10,8 @@
 #include "list.hpp"
 #include "algorithm.hpp"
 #include "lock.hpp"
-#include "task.hpp"
+#include "MyAllocator.hpp"
+
 
 using std::chrono::system_clock;
 
@@ -239,6 +240,17 @@ void test_vector() {
 
 }
 
+void test_myallocator() {
+    std::vector<int, MyAllocator<int>> vec;
+    for (int i = 0; i < 10; ++i) {
+        vec.push_back(i);
+    }
+    for (int i : vec) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+}
+
 int main() {
 //    test_func();
 //    test_A();
@@ -262,8 +274,8 @@ int main() {
 
    // algorithm_test();
 
-    // list_test();
-    // vector_test();
-    task_test();
+
+    test_myallocator();
+
     return 0;
 }
