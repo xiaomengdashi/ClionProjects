@@ -13,4 +13,5 @@ add_executable(mystl
         algorithm.hpp
         list.hpp
         vector.hpp
+        MyAllocator.hpp
 )
