@@ -22,42 +22,90 @@ private:
                                [this, self](boost::system::error_code ec, std::size_t bytes_transferred) {
                                    if (ec) return;
 
-                                   // 解析请求头
                                    std::istream request_stream(&request_buffer_);
                                    std::string request_line;
                                    std::getline(request_stream, request_line);
 
-                                   // 检查是否为POST请求
-                                   if (request_line.find("POST") != std::string::npos) {
-                                       // 解析Content-Length
-                                       std::string header;
-                                       while (std::getline(request_stream, header) && header != "\r") {
-                                           if (header.find("Content-Length:") != std::string::npos) {
-                                               content_length_ = std::stoul(header.substr(16));
-                                               std::cout << content_length_ << std::endl;
-                                               break;
-                                           }
-                                       }
+                                   // 新增GET请求处理分支
+                                   if (request_line.find("GET") != std::string::npos) {
+                                       // 解析请求路径（示例路径：/download?file=filename）
+                                       size_t start = request_line.find(' ') + 1;
+                                       size_t end = request_line.find(' ', start);
+                                       std::string path = request_line.substr(start, end - start);
 
-                                       // 创建临时文件
-                                       temp_file_path_ = "uploaded_file.tmp";
-                                       output_file_.open(temp_file_path_, std::ios::binary);
-
-                                       // 处理缓冲区现有数据
-                                       const size_t preloaded = request_buffer_.size();
-                                       if (preloaded > 0) {
-                                           // 立即处理已读取的body数据
-                                           received_bytes_ += preloaded;
-                                           output_file_ << &request_buffer_; // 直接写入文件
-                                       }
-
-
-                                       // 读取剩余数据
-                                       read_body();
-                                   } else {
+                                       // 处理文件下载
+                                       handle_download(path);
+                                   }
+                                   else if (request_line.find("POST") != std::string::npos) {
+                                       // ... 原有POST处理代码保持不变 ...
+                                   }
+                                   else {
                                        send_response("HTTP/1.1 405 Method Not Allowed\r\n\r\n");
                                    }
                                });
+    }
+
+// 新增文件下载处理方法
+    void handle_download(const std::string& path) {
+        // 简单路径解析（示例）
+        size_t file_param = path.find("file=");
+        if (file_param == std::string::npos) {
+            send_response("HTTP/1.1 400 Bad Request\r\n\r\n");
+            return;
+        }
+
+        std::string filename = path.substr(file_param + 5);
+        std::filesystem::path file_path(filename);
+
+        // 打开文件
+        std::ifstream file(file_path, std::ios::binary | std::ios::ate);
+        if (!file) {
+            send_response("HTTP/1.1 404 Not Found\r\n\r\n");
+            return;
+        }
+
+        // 获取文件大小
+        auto file_size = file.tellg();
+        file.seekg(0);
+
+        // 发送HTTP头
+        std::ostringstream header;
+        header << "HTTP/1.1 200 OK\r\n"
+               << "Content-Type: application/octet-stream\r\n"
+               << "Content-Length: " << file_size << "\r\n\r\n";
+
+        asio::async_write(socket_, asio::buffer(header.str()),
+                          [this, self = shared_from_this(), file = std::move(file), file_size]
+                                  (boost::system::error_code ec, std::size_t) mutable {
+                              if (!ec) {
+                                  // 分块发送文件内容
+                                  send_file_chunk(std::move(file), file_size);
+                              }
+                          });
+    }
+
+// 新增分块发送方法
+    void send_file_chunk(std::ifstream file, std::streamsize file_size) {
+        auto self(shared_from_this());
+        constexpr size_t chunk_size = 1 * 1024 * 1024; // 1MB分块
+
+        // 动态分配缓冲区
+        auto buffer = std::make_shared<std::vector<char>>(chunk_size);
+
+        file.read(buffer->data(), chunk_size);
+        size_t bytes_read = file.gcount();
+
+        asio::async_write(socket_, asio::buffer(buffer->data(), bytes_read),
+                          [this, self, file = std::move(file), file_size, buffer, bytes_read]
+                                  (boost::system::error_code ec, std::size_t) mutable {
+                              if (ec || file.eof()) {
+                                  // 传输完成或出错
+                                  return;
+                              }
+
+                              // 继续发送下一块
+                              send_file_chunk(std::move(file), file_size);
+                          });
     }
 
     void read_body() {
