@@ -7,6 +7,7 @@ set(runtime_output_dir "${CMAKE_BINARY_DIR}/bin")
 
 if(WIN32)
     include_directories(
+            ./
             D:\\CppBoost\\boost_1_87_0
     )
     link_directories(
@@ -19,6 +20,7 @@ if(WIN32)
 
 else()
     include_directories(
+            ./
             /usr/local/include/
     )
     link_directories(
@@ -28,5 +30,5 @@ else()
 endif()
 
 include_directories(${Boost_INCLUDE_DIRS})    # 包含Boost库的头文件目录
-add_executable(cppexp main.cpp)
+add_executable(cppexp main.cpp UrlDecode.hpp)
 target_link_libraries(cppexp  ${Boost_LIBRARIES}  ${WIN32_LIBS})    # 链接Boost库

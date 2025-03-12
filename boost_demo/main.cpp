@@ -4,14 +4,21 @@
 #include <memory>
 #include <filesystem>
 
+#include "UrlDecode.hpp"
+
+
 namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 
 class HttpConnection : public std::enable_shared_from_this<HttpConnection> {
 public:
-    HttpConnection(tcp::socket socket) : socket_(std::move(socket)) {}
+    explicit HttpConnection(tcp::socket socket) : socket_(std::move(socket)) {}
+    ~HttpConnection() {
+        std::cout << "Connection closed" << std::endl;
+    }
 
     void start() {
+        socket_.set_option(tcp::no_delay(true));
         read_request();
     }
 
@@ -37,7 +44,30 @@ private:
                                        handle_download(path);
                                    }
                                    else if (request_line.find("POST") != std::string::npos) {
-                                       // ... 原有POST处理代码保持不变 ...
+                                       // 解析Content-Length
+                                       std::string header;
+                                       while (std::getline(request_stream, header) && header != "\r") {
+                                           if (header.find("Content-Length:") != std::string::npos) {
+                                               content_length_ = std::stoul(header.substr(16));
+                                               std::cout << content_length_ << std::endl;
+                                               break;
+                                           }
+                                       }
+
+                                       // 创建临时文件
+                                       temp_file_path_ = "uploaded_file.tmp";
+                                       output_file_.open(temp_file_path_, std::ios::binary);
+
+                                       // 处理缓冲区现有数据
+                                       const size_t preloaded = request_buffer_.size();
+                                       if (preloaded > 0) {
+                                           // 立即处理已读取的body数据
+                                           received_bytes_ += preloaded;
+                                           output_file_ << &request_buffer_; // 直接写入文件
+                                       }
+
+                                       // 读取剩余数据
+                                       read_body();
                                    }
                                    else {
                                        send_response("HTTP/1.1 405 Method Not Allowed\r\n\r\n");
@@ -45,18 +75,37 @@ private:
                                });
     }
 
-// 新增文件下载处理方法
     void handle_download(const std::string& path) {
-        // 简单路径解析（示例）
-        size_t file_param = path.find("file=");
-        if (file_param == std::string::npos) {
-            send_response("HTTP/1.1 400 Bad Request\r\n\r\n");
+        UrlParser parser(path);
+
+        // 获取文件参数
+        std::string filename = parser.get_param("file");
+        std::cout << "file_name: " << filename << std::endl;
+        if (!filename.empty()) {
+            // 处理真实文件下载
+            download_real_file(filename);
             return;
         }
 
-        std::string filename = path.substr(file_param + 5);
-        std::filesystem::path file_path(filename);
+        // 获取虚拟文件大小参数
+        std::string size_str = parser.get_param("size");
+        if (!size_str.empty()) {
+            try {
+                size_t file_size = std::stoul(size_str);
+                std::cout << "file_size: " << file_size << std::endl;
+                download_virtual_file(file_size);
+                return;
+            } catch(...) {
+                send_response("HTTP/1.1 400 Bad Request\r\n\r\n");
+                return;
+            }
+        }
 
+        send_response("HTTP/1.1 400 Bad Request\r\n\r\n");
+    }
+
+
+    void download_real_file(const std::string& file_path) {
         // 打开文件
         std::ifstream file(file_path, std::ios::binary | std::ios::ate);
         if (!file) {
@@ -75,7 +124,7 @@ private:
                << "Content-Length: " << file_size << "\r\n\r\n";
 
         asio::async_write(socket_, asio::buffer(header.str()),
-                          [this, self = shared_from_this(), file = std::move(file), file_size]
+                          [this, self = shared_from_this(), file_size, &file]
                                   (boost::system::error_code ec, std::size_t) mutable {
                               if (!ec) {
                                   // 分块发送文件内容
@@ -84,10 +133,38 @@ private:
                           });
     }
 
-// 新增分块发送方法
+    void download_virtual_file(const size_t file_size) {
+        // 解析文件大小
+        file_size_ = file_size;
+        try {
+            if (file_size_ > 1024 * 1024 * 1024) { // 限制最大1GB
+                send_response("HTTP/1.1 413 Payload Too Large\r\n\r\n");
+                return;
+            }
+        } catch (...) {
+            send_response("HTTP/1.1 400 Bad Request\r\n\r\n");
+            return;
+        }
+
+        // 发送响应头
+        std::ostringstream header;
+        header << "HTTP/1.1 200 OK\r\n"
+               << "Content-Type: application/octet-stream\r\n"
+               << "Content-Length: " << file_size_ << "\r\n"
+               << "Content-Disposition: attachment; filename=\"virtual_file.bin\"\r\n\r\n";
+
+        asio::async_write(socket_, asio::buffer(header.str()),
+                          [this, self = shared_from_this()](boost::system::error_code ec, std::size_t) {
+                              if (!ec) {
+                                  send_virtual_data(0); // 开始发送虚拟数据
+                              }
+                          });
+    }
+
+    // 新增分块发送方法
     void send_file_chunk(std::ifstream file, std::streamsize file_size) {
         auto self(shared_from_this());
-        constexpr size_t chunk_size = 1 * 1024 * 1024; // 1MB分块
+        constexpr size_t chunk_size = 1 * 1024; // 1MB分块
 
         // 动态分配缓冲区
         auto buffer = std::make_shared<std::vector<char>>(chunk_size);
@@ -96,15 +173,36 @@ private:
         size_t bytes_read = file.gcount();
 
         asio::async_write(socket_, asio::buffer(buffer->data(), bytes_read),
-                          [this, self, file = std::move(file), file_size, buffer, bytes_read]
+                          [this, self, file = std::move(file), file_size, buffer]
                                   (boost::system::error_code ec, std::size_t) mutable {
                               if (ec || file.eof()) {
+                                  output_file_.close();
+                                  socket_.shutdown(asio::socket_base::shutdown_send);
                                   // 传输完成或出错
                                   return;
                               }
 
                               // 继续发送下一块
                               send_file_chunk(std::move(file), file_size);
+                          });
+    }
+
+    void send_virtual_data(size_t sent_bytes) {
+        auto self(shared_from_this());
+        constexpr size_t chunk_size = 1 * 1024; // 1KB分块
+
+        // 生成虚拟数据（示例使用0x01填充）
+        auto buffer = std::make_shared<std::vector<char>>(std::min(chunk_size, file_size_ - sent_bytes), 0x01);
+
+        asio::async_write(socket_, asio::buffer(*buffer),
+                          [this, self, buffer, sent_bytes](boost::system::error_code ec, std::size_t bytes_transferred) {
+                              if (ec || sent_bytes + bytes_transferred >= file_size_) {
+                                  graceful_shutdown();
+                                  return;
+                              }
+
+                              // 继续发送下一块
+                              send_virtual_data(sent_bytes + bytes_transferred);
                           });
     }
 
@@ -171,10 +269,34 @@ private:
                           [this, self](boost::system::error_code ec, std::size_t) {
                               if (!ec) {
                                   // 关闭连接
-                                  boost::system::error_code ignored_ec;
-                                  socket_.shutdown(tcp::socket::shutdown_both, ignored_ec);
+                                  graceful_shutdown();
                               }
                           });
+    }
+
+    // 服务端优雅关闭示例
+    void graceful_shutdown() {
+        auto self(shared_from_this());
+
+        // 1. 发送FIN（停止写入）
+        boost::system::error_code ec;
+        socket_.shutdown(tcp::socket::shutdown_send, ec);
+        if (ec) {
+            std::cerr << "Shutdown error: " << ec.message() << std::endl;
+            return;
+        }
+
+        // 2. 继续读取客户端数据（直到收到FIN）
+        asio::async_read(socket_, asio::dynamic_buffer(dummy_buffer_),
+                         [this, self](boost::system::error_code ec, size_t) {
+                            std::cout << "Received data" << std::endl;
+                             if (ec == asio::error::eof) {
+                                 // 3. 安全关闭连接
+                                 socket_.close();
+                             } else if (ec) {
+                                 std::cerr << "Read error: " << ec.message() << std::endl;
+                             }
+                         });
     }
 
 private:
@@ -184,6 +306,8 @@ private:
     std::filesystem::path temp_file_path_;
     size_t content_length_ = 0;
     size_t received_bytes_ = 0;
+    size_t file_size_ = 0;
+    std::string dummy_buffer_;
 };
 
 class HttpServer {
