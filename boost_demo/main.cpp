@@ -145,17 +145,33 @@ private:
             return;
         }
 
-        // 发送响应头
+        // 构造HTTP头
         std::ostringstream header;
         header << "HTTP/1.1 200 OK\r\n"
                << "Content-Type: application/octet-stream\r\n"
                << "Content-Length: " << file_size_ << "\r\n"
                << "Content-Disposition: attachment; filename=\"virtual_file.bin\"\r\n\r\n";
+        auto header_str = std::make_shared<std::string>(header.str());
+        auto header_len = header_str->size();
 
-        asio::async_write(socket_, asio::buffer(header.str()),
-                          [this, self = shared_from_this()](boost::system::error_code ec, std::size_t) {
-                              if (!ec) {
-                                  send_virtual_data(0); // 开始发送虚拟数据
+        // 生成首个数据分片
+        size_t chunk_size = 1 * 1024 - header_len;  // 默认头小于1KB，避免分片问题
+        size_t first_chunk = std::min(chunk_size, file_size_);
+        auto data = std::make_shared<std::vector<char>>(first_chunk, 'a');
+
+        // 合并头和首块数据
+        std::vector<asio::const_buffer> buffers{
+                asio::buffer(*header_str),
+                asio::buffer(*data)
+        };
+
+        asio::async_write(socket_, buffers,
+                          [this, self = shared_from_this(), header_str, data, sent_bytes = first_chunk]
+                                  (boost::system::error_code ec, std::size_t) {
+                              if (!ec && sent_bytes < file_size_) {
+                                  send_virtual_data(sent_bytes); // 继续发送剩余分片
+                              } else if (ec) {
+                                  graceful_shutdown();
                               }
                           });
     }
@@ -187,20 +203,18 @@ private:
 
     void send_virtual_data(size_t sent_bytes) {
         auto self(shared_from_this());
-        constexpr size_t chunk_size = 1 * 1024; // 1KB分块
+        constexpr size_t chunk_size = 1 * 1024;
 
-        // 生成虚拟数据（示例使用a填充）
-        auto buffer = std::make_shared<std::vector<char>>(std::min(chunk_size, file_size_ - sent_bytes), 'a');
+        size_t remaining = file_size_ - sent_bytes;
+        auto data = std::make_shared<std::vector<char>>(std::min(chunk_size, remaining), 'a');
 
-        asio::async_write(socket_, asio::buffer(*buffer),
-                          [this, self, buffer, sent_bytes](boost::system::error_code ec, std::size_t bytes_transferred) {
-                              if (ec || sent_bytes + bytes_transferred >= file_size_) {
+        asio::async_write(socket_, asio::buffer(*data),
+                          [this, self, data, sent_bytes](boost::system::error_code ec, std::size_t bytes_transferred) {
+                              if (!ec && (sent_bytes + bytes_transferred) < file_size_) {
+                                  send_virtual_data(sent_bytes + bytes_transferred);
+                              } else {
                                   graceful_shutdown();
-                                  return;
                               }
-
-                              // 继续发送下一块
-                              send_virtual_data(sent_bytes + bytes_transferred);
                           });
     }
 
