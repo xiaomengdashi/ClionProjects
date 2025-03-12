@@ -104,7 +104,6 @@ private:
         send_response("HTTP/1.1 400 Bad Request\r\n\r\n");
     }
 
-
     void download_real_file(const std::string& file_path) {
         // 打开文件
         std::ifstream file(file_path, std::ios::binary | std::ios::ate);
@@ -124,7 +123,7 @@ private:
                << "Content-Length: " << file_size << "\r\n\r\n";
 
         asio::async_write(socket_, asio::buffer(header.str()),
-                          [this, self = shared_from_this(), file_size, &file]
+                          [this, self = shared_from_this(), file_size, file = std::move(file)]
                                   (boost::system::error_code ec, std::size_t) mutable {
                               if (!ec) {
                                   // 分块发送文件内容
@@ -161,7 +160,6 @@ private:
                           });
     }
 
-    // 新增分块发送方法
     void send_file_chunk(std::ifstream file, std::streamsize file_size) {
         auto self(shared_from_this());
         constexpr size_t chunk_size = 1 * 1024; // 1MB分块
@@ -191,8 +189,8 @@ private:
         auto self(shared_from_this());
         constexpr size_t chunk_size = 1 * 1024; // 1KB分块
 
-        // 生成虚拟数据（示例使用0x01填充）
-        auto buffer = std::make_shared<std::vector<char>>(std::min(chunk_size, file_size_ - sent_bytes), 0x01);
+        // 生成虚拟数据（示例使用a填充）
+        auto buffer = std::make_shared<std::vector<char>>(std::min(chunk_size, file_size_ - sent_bytes), 'a');
 
         asio::async_write(socket_, asio::buffer(*buffer),
                           [this, self, buffer, sent_bytes](boost::system::error_code ec, std::size_t bytes_transferred) {
