@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <iterator>
 
-// Deque 类定义
+// 基于环形数组的双端队列
 template <typename T>
 class Deque {
 private:
