@@ -2,20 +2,20 @@
 #include <stdexcept>
 #include <iterator>
 
-// »ùÓÚ»·ĞÎÊı×éµÄË«¶Ë¶ÓÁĞ
+// åŸºäºç¯å½¢æ•°ç»„çš„åŒç«¯é˜Ÿåˆ—
 template <typename T>
 class Deque {
 private:
-    T* buffer;               // ÄÚ²¿»º³åÇø
-    size_t capacity;         // »º³åÇøÈİÁ¿
-    size_t front_idx;        // Í·²¿Ë÷Òı
-    size_t back_idx;         // Î²²¿Ë÷Òı
-    size_t count;            // µ±Ç°ÔªËØÊıÁ¿
+    T* buffer;               // å†…éƒ¨ç¼“å†²åŒº
+    size_t capacity;         // ç¼“å†²åŒºå®¹é‡
+    size_t front_idx;        // å¤´éƒ¨ç´¢å¼•
+    size_t back_idx;         // å°¾éƒ¨ç´¢å¼•
+    size_t count;            // å½“å‰å…ƒç´ æ•°é‡
 
-    // µ÷ÕûÈİÁ¿
+    // è°ƒæ•´å®¹é‡
     void resize(size_t new_capacity) {
         T* new_buffer = new T[new_capacity];
-        // ÖØĞÂÅÅÁĞÔªËØ
+        // é‡æ–°æ’åˆ—å…ƒç´ 
         for (size_t i = 0; i < count; ++i) {
             new_buffer[i] = buffer[(front_idx + i) % capacity];
         }
@@ -27,32 +27,32 @@ private:
     }
 
 public:
-    // ¹¹Ôìº¯Êı
+    // æ„é€ å‡½æ•°
     Deque(size_t initial_capacity = 8)
             : capacity(initial_capacity), front_idx(0), back_idx(0), count(0) {
         buffer = new T[capacity];
     }
 
-    // Îö¹¹º¯Êı
+    // ææ„å‡½æ•°
     ~Deque() {
         delete[] buffer;
     }
 
-    // ½ûÓÃ¸´ÖÆ¹¹Ôìº¯ÊıºÍ¸³ÖµÔËËã·û£¨ÎªÁË¼ò½à£¬¿É¸ù¾İĞèÒªÊµÏÖ£©
+    // ç¦ç”¨å¤åˆ¶æ„é€ å‡½æ•°å’Œèµ‹å€¼è¿ç®—ç¬¦ï¼ˆä¸ºäº†ç®€æ´ï¼Œå¯æ ¹æ®éœ€è¦å®ç°ï¼‰
     Deque(const Deque& other) = delete;
     Deque& operator=(const Deque& other) = delete;
 
-    // ¼ì²éÊÇ·ñÎª¿Õ
+    // æ£€æŸ¥æ˜¯å¦ä¸ºç©º
     bool empty() const {
         return count == 0;
     }
 
-    // »ñÈ¡´óĞ¡
+    // è·å–å¤§å°
     size_t size() const {
         return count;
     }
 
-    // ÔÚÇ°Ãæ²åÈëÔªËØ
+    // åœ¨å‰é¢æ’å…¥å…ƒç´ 
     void push_front(const T& value) {
         if (count == capacity) {
             resize(capacity * 2);
@@ -62,7 +62,7 @@ public:
         ++count;
     }
 
-    // ÔÚºóÃæ²åÈëÔªËØ
+    // åœ¨åé¢æ’å…¥å…ƒç´ 
     void push_back(const T& value) {
         if (count == capacity) {
             resize(capacity * 2);
@@ -72,7 +72,7 @@ public:
         ++count;
     }
 
-    // ´ÓÇ°ÃæÉ¾³ıÔªËØ
+    // ä»å‰é¢åˆ é™¤å…ƒç´ 
     void pop_front() {
         if (empty()) {
             throw std::out_of_range("Deque is empty");
@@ -81,7 +81,7 @@ public:
         --count;
     }
 
-    // ´ÓºóÃæÉ¾³ıÔªËØ
+    // ä»åé¢åˆ é™¤å…ƒç´ 
     void pop_back() {
         if (empty()) {
             throw std::out_of_range("Deque is empty");
@@ -90,7 +90,7 @@ public:
         --count;
     }
 
-    // »ñÈ¡Ç°¶ËÔªËØ
+    // è·å–å‰ç«¯å…ƒç´ 
     T& front() {
         if (empty()) {
             throw std::out_of_range("Deque is empty");
@@ -105,7 +105,7 @@ public:
         return buffer[front_idx];
     }
 
-    // »ñÈ¡ºó¶ËÔªËØ
+    // è·å–åç«¯å…ƒç´ 
     T& back() {
         if (empty()) {
             throw std::out_of_range("Deque is empty");
@@ -122,7 +122,7 @@ public:
         return buffer[last_idx];
     }
 
-    // µü´úÆ÷Àà¶¨Òå
+    // è¿­ä»£å™¨ç±»å®šä¹‰
     class Iterator {
     private:
         Deque<T>* deque_ptr;
@@ -138,7 +138,7 @@ public:
         Iterator(Deque<T>* deque, size_t position)
                 : deque_ptr(deque), pos(position) {}
 
-        // ½âÒıÓÃ²Ù×÷
+        // è§£å¼•ç”¨æ“ä½œ
         reference operator*() const {
             size_t real_idx = (deque_ptr->front_idx + pos) % deque_ptr->capacity;
             return deque_ptr->buffer[real_idx];
@@ -149,33 +149,33 @@ public:
             return &(deque_ptr->buffer[real_idx]);
         }
 
-        // Ç°ÖÃµİÔö
+        // å‰ç½®é€’å¢
         Iterator& operator++() {
             ++pos;
             return *this;
         }
 
-        // ºóÖÃµİÔö
+        // åç½®é€’å¢
         Iterator operator++(int) {
             Iterator temp = *this;
             ++pos;
             return temp;
         }
 
-        // Ç°ÖÃµİ¼õ
+        // å‰ç½®é€’å‡
         Iterator& operator--() {
             --pos;
             return *this;
         }
 
-        // ºóÖÃµİ¼õ
+        // åç½®é€’å‡
         Iterator operator--(int) {
             Iterator temp = *this;
             --pos;
             return temp;
         }
 
-        // ±È½Ï²Ù×÷
+        // æ¯”è¾ƒæ“ä½œ
         bool operator==(const Iterator& other) const {
             return (deque_ptr == other.deque_ptr) && (pos == other.pos);
         }
@@ -185,50 +185,50 @@ public:
         }
     };
 
-    // »ñÈ¡ begin µü´úÆ÷
+    // è·å– begin è¿­ä»£å™¨
     Iterator begin() {
         return Iterator(this, 0);
     }
 
-    // »ñÈ¡ end µü´úÆ÷
+    // è·å– end è¿­ä»£å™¨
     Iterator end() {
         return Iterator(this, count);
     }
 };
 
-// Ê¹ÓÃÊ¾Àı
+// ä½¿ç”¨ç¤ºä¾‹
 int main() {
     Deque<std::string> dq;
 
-    // ÔÚºóÃæ²åÈëÔªËØ
+    // åœ¨åé¢æ’å…¥å…ƒç´ 
     dq.push_back("Apple");
     dq.push_back("Banana");
     dq.push_back("Cherry");
 
-    // ÔÚÇ°Ãæ²åÈëÔªËØ
+    // åœ¨å‰é¢æ’å…¥å…ƒç´ 
     dq.push_front("Date");
     dq.push_front("Elderberry");
 
-    // ÏÔÊ¾¶ÓÁĞ´óĞ¡
-    std::cout << "Deque ´óĞ¡: " << dq.size() << std::endl;
+    // æ˜¾ç¤ºé˜Ÿåˆ—å¤§å°
+    std::cout << "Deque å¤§å°: " << dq.size() << std::endl;
 
-    // Ê¹ÓÃµü´úÆ÷½øĞĞ±éÀú
-    std::cout << "Deque ÔªËØ: ";
+    // ä½¿ç”¨è¿­ä»£å™¨è¿›è¡Œéå†
+    std::cout << "Deque å…ƒç´ : ";
     for (auto it = dq.begin(); it != dq.end(); ++it) {
         std::cout << *it << " ";
     }
     std::cout << std::endl;
 
-    // ·ÃÎÊÇ°¶ËºÍºó¶ËÔªËØ
-    std::cout << "Ç°¶ËÔªËØ: " << dq.front() << std::endl;
-    std::cout << "ºó¶ËÔªËØ: " << dq.back() << std::endl;
+    // è®¿é—®å‰ç«¯å’Œåç«¯å…ƒç´ 
+    std::cout << "å‰ç«¯å…ƒç´ : " << dq.front() << std::endl;
+    std::cout << "åç«¯å…ƒç´ : " << dq.back() << std::endl;
 
-    // É¾³ıÔªËØ
+    // åˆ é™¤å…ƒç´ 
     dq.pop_front();
     dq.pop_back();
 
-    // ÔÙ´Î±éÀú
-    std::cout << "É¾³ıÔªËØºóµÄ Deque: ";
+    // å†æ¬¡éå†
+    std::cout << "åˆ é™¤å…ƒç´ åçš„ Deque: ";
     for (auto it = dq.begin(); it != dq.end(); ++it) {
         std::cout << *it << " ";
     }

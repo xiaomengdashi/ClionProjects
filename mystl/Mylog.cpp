@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <iostream>
 
-// ÔÚLoggerÀà¶¨ÒåÇ°Ìí¼Ó
+// åœ¨Loggerç±»å®šä¹‰å‰æ·»åŠ 
 enum class LogLevel {
     DEBUG,
     INFO,
@@ -23,7 +23,7 @@ enum class LogLevel {
     CRITICAL
 };
 
-// ¸¨Öúº¯Êı£¬½«µ¥¸ö²ÎÊı×ª»»Îª×Ö·û´®
+// è¾…åŠ©å‡½æ•°ï¼Œå°†å•ä¸ªå‚æ•°è½¬æ¢ä¸ºå­—ç¬¦ä¸²
 template<typename T>
 std::string to_string_helper(T&& arg) {
     std::ostringstream oss;
@@ -31,7 +31,7 @@ std::string to_string_helper(T&& arg) {
     return oss.str();
 }
 
-// Ïß³Ì°²È«µÄÈÕÖ¾¶ÓÁĞ
+// çº¿ç¨‹å®‰å…¨çš„æ—¥å¿—é˜Ÿåˆ—
 class LogQueue {
 public:
     void push(const std::string& msg) {
@@ -66,14 +66,14 @@ private:
     bool is_shutdown_ = false;
 };
 
-// Logger Àà
+// Logger ç±»
 class Logger {
 public:
     Logger(const std::string& filename, LogLevel level = LogLevel::INFO)
     : log_file_(filename, std::ios::out | std::ios::app), exit_flag_(false),
     current_level_(level) {
         if (!log_file_.is_open()) {
-            throw std::runtime_error("ÎŞ·¨´ò¿ªÈÕÖ¾ÎÄ¼ş");
+            throw std::runtime_error("æ— æ³•æ‰“å¼€æ—¥å¿—æ–‡ä»¶");
         }
         worker_thread_ = std::thread(&Logger::processQueue, this);
     }
@@ -88,10 +88,10 @@ public:
         }
     }
 
-    // ÈÕÖ¾½Ó¿Ú£ºÖ§³Ö´ø¸ñÊ½×Ö·û´®µÄÈÕÖ¾
+    // æ—¥å¿—æ¥å£ï¼šæ”¯æŒå¸¦æ ¼å¼å­—ç¬¦ä¸²çš„æ—¥å¿—
     template<typename... Args>
     void log(LogLevel level, const std::string& format, Args&&... args) {
-        if (level < current_level_) return; // ºöÂÔµÍÓÅÏÈ¼¶µÄÈÕÖ¾
+        if (level < current_level_) return; // å¿½ç•¥ä½ä¼˜å…ˆçº§çš„æ—¥å¿—
         log_queue_.push(formatMessage(level, format, std::forward<Args>(args)...));
     }
 
@@ -106,12 +106,12 @@ private:
     std::atomic<bool> exit_flag_;
     std::atomic<LogLevel> current_level_;
 
-    // ÔÚLoggerÀàÄÚÌí¼ÓË½ÓĞ·½·¨
+    // åœ¨Loggerç±»å†…æ·»åŠ ç§æœ‰æ–¹æ³•
     std::string getTimestamp() {
         auto now = std::chrono::system_clock::now();
         std::time_t time = std::chrono::system_clock::to_time_t(now);
 
-        // Ïß³Ì°²È«µÄÊ±¼ä¸ñÊ½»¯£¨¿çÆ½Ì¨£©
+        // çº¿ç¨‹å®‰å…¨çš„æ—¶é—´æ ¼å¼åŒ–ï¼ˆè·¨å¹³å°ï¼‰
         struct tm tm_buf;
 #ifdef _WIN32
         localtime_s(&tm_buf, &time);
@@ -122,7 +122,7 @@ private:
         char timestamp[32];
         strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", &tm_buf);
 
-        // Ìí¼ÓºÁÃë£¨¿ÉÑ¡£©
+        // æ·»åŠ æ¯«ç§’ï¼ˆå¯é€‰ï¼‰
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now.time_since_epoch()
         ) % 1000;
@@ -138,20 +138,20 @@ private:
         }
     }
 
-    // ĞŞ¸Ä¸ñÊ½»¯·½·¨
+    // ä¿®æ”¹æ ¼å¼åŒ–æ–¹æ³•
     template<typename... Args>
     std::string formatMessage(LogLevel level, const std::string& format, Args&&... args) {
         std::string prefix = "[" + getTimestamp() + "] [" + levelToString(level) + "] ";
         return prefix + formatMessageImpl(format, std::forward<Args>(args)...);
     }
 
-    // ¼¶±ğ×ª×Ö·û´®
+    // çº§åˆ«è½¬å­—ç¬¦ä¸²
     std::string levelToString(LogLevel level) {
         static const std::string names[] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"};
         return names[static_cast<int>(level)];
     }
 
-    // Ê¹ÓÃÄ£°åÕÛµş¸ñÊ½»¯ÈÕÖ¾ÏûÏ¢£¬Ö§³Ö "{}" Õ¼Î»·û
+    // ä½¿ç”¨æ¨¡æ¿æŠ˜å æ ¼å¼åŒ–æ—¥å¿—æ¶ˆæ¯ï¼Œæ”¯æŒ "{}" å ä½ç¬¦
     template<typename... Args>
     std::string formatMessageImpl(const std::string& format, Args&&... args) {
         std::vector<std::string> arg_strings = { to_string_helper(std::forward<Args>(args))... };
@@ -165,17 +165,17 @@ private:
             if (arg_index < arg_strings.size()) {
                 oss << arg_strings[arg_index++];
             } else {
-                // Ã»ÓĞ×ã¹»µÄ²ÎÊı£¬±£Áô "{}"
+                // æ²¡æœ‰è¶³å¤Ÿçš„å‚æ•°ï¼Œä¿ç•™ "{}"
                 oss << "{}";
             }
-            pos = placeholder + 2; // Ìø¹ı "{}"
+            pos = placeholder + 2; // è·³è¿‡ "{}"
             placeholder = format.find("{}", pos);
         }
 
-        // Ìí¼ÓÊ£ÓàµÄ×Ö·û´®
+        // æ·»åŠ å‰©ä½™çš„å­—ç¬¦ä¸²
         oss << format.substr(pos);
 
-        // Èç¹û»¹ÓĞÊ£ÓàµÄ²ÎÊı£¬°´Ô­·½Ê½Æ´½Ó
+        // å¦‚æœè¿˜æœ‰å‰©ä½™çš„å‚æ•°ï¼ŒæŒ‰åŸæ–¹å¼æ‹¼æ¥
         while (arg_index < arg_strings.size()) {
             oss << arg_strings[arg_index++];
         }
@@ -184,7 +184,7 @@ private:
     }
 };
 
-// Ê¹ÓÃÊ¾Àı
+// ä½¿ç”¨ç¤ºä¾‹
 int main() {
     try {
         Logger logger("log.txt");
@@ -202,14 +202,14 @@ int main() {
         logger.log(LogLevel::ERROR,"Multiple placeholders: {}, {}, {}.", 1, 2, 3);
 
         logger.setLevel(LogLevel::WARNING);
-        logger.log(LogLevel::INFO, "This message won't be recorded"); // ±»¹ıÂË
-        logger.log(LogLevel::ERROR, "This message won't be recorded"); // ±»¹ıÂË
+        logger.log(LogLevel::INFO, "This message won't be recorded"); // è¢«è¿‡æ»¤
+        logger.log(LogLevel::ERROR, "This message won't be recorded"); // è¢«è¿‡æ»¤
 
-        // Ä£ÄâÒ»Ğ©ÑÓ³ÙÒÔÈ·±£ºóÌ¨Ïß³Ì´¦ÀíÍêÈÕÖ¾
+        // æ¨¡æ‹Ÿä¸€äº›å»¶è¿Ÿä»¥ç¡®ä¿åå°çº¿ç¨‹å¤„ç†å®Œæ—¥å¿—
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     catch (const std::exception& ex) {
-        std::cerr << "ÈÕÖ¾ÏµÍ³³õÊ¼»¯Ê§°Ü: " << ex.what() << std::endl;
+        std::cerr << "æ—¥å¿—ç³»ç»Ÿåˆå§‹åŒ–å¤±è´¥: " << ex.what() << std::endl;
     }
 
     return 0;
