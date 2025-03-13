@@ -5,29 +5,29 @@
 #include <array>
 
 
-// »ùÓÚ·Ö¿é´æ´¢µÄË«¶Ë¶ÓÁĞ
+// åŸºäºåˆ†å—å­˜å‚¨çš„åŒç«¯é˜Ÿåˆ—
 template <typename T>
 class Deque {
 private:
-    static const size_t CHUNK_SIZE = 512;  // Ã¿¸ö¿éµÄ´óĞ¡
+    static const size_t CHUNK_SIZE = 512;  // æ¯ä¸ªå—çš„å¤§å°
     using Chunk = std::array<T, CHUNK_SIZE>;
 
-    std::vector<std::unique_ptr<Chunk>> chunks;  // ¿éÈİÆ÷
-    size_t front_chunk;    // Ê×ÔªËØËùÔÚ¿éË÷Òı
-    size_t front_offset;   // Ê×ÔªËØÔÚ¿éÄÚµÄÆ«ÒÆ
-    size_t back_chunk;     // Ä©ÔªËØËùÔÚ¿éË÷Òı
-    size_t back_offset;    // Ä©ÔªËØÔÚ¿éÄÚµÄÆ«ÒÆ
-    size_t element_count;  // ÔªËØ×ÜÊı
+    std::vector<std::unique_ptr<Chunk>> chunks;  // å—å®¹å™¨
+    size_t front_chunk;    // é¦–å…ƒç´ æ‰€åœ¨å—ç´¢å¼•
+    size_t front_offset;   // é¦–å…ƒç´ åœ¨å—å†…çš„åç§»
+    size_t back_chunk;     // æœ«å…ƒç´ æ‰€åœ¨å—ç´¢å¼•
+    size_t back_offset;    // æœ«å…ƒç´ åœ¨å—å†…çš„åç§»
+    size_t element_count;  // å…ƒç´ æ€»æ•°
 
-    // Ç°Ïò·ÖÅäĞÂ¿é
+    // å‰å‘åˆ†é…æ–°å—
     void expand_front() {
-        // ÔÚµ±Ç°Î»ÖÃ²åÈëĞÂ¿é
+        // åœ¨å½“å‰ä½ç½®æ’å…¥æ–°å—
         chunks.insert(chunks.begin() + front_chunk, std::make_unique<Chunk>());
-        // front_chunk±£³ÖÖ¸ÏòĞÂ²åÈë¿éµÄË÷Òı
-        front_offset = CHUNK_SIZE - 1;  // ÖØÖÃÆ«ÒÆ
+        // front_chunkä¿æŒæŒ‡å‘æ–°æ’å…¥å—çš„ç´¢å¼•
+        front_offset = CHUNK_SIZE - 1;  // é‡ç½®åç§»
     }
 
-    // ºóÏò·ÖÅäĞÂ¿é
+    // åå‘åˆ†é…æ–°å—
     void expand_back() {
         chunks.insert(chunks.begin() + back_chunk + 1, std::make_unique<Chunk>());
         back_chunk = back_chunk + 1;
@@ -35,7 +35,7 @@ private:
     }
 
 public:
-    // µü´úÆ÷¶¨Òå
+    // è¿­ä»£å™¨å®šä¹‰
     class Iterator {
     public:
         using iterator_category = std::random_access_iterator_tag;
@@ -94,16 +94,16 @@ public:
         chunks.push_back(std::make_unique<Chunk>());
     }
 
-    // ¿½±´¹¹Ôìº¯Êı
+    // æ‹·è´æ„é€ å‡½æ•°
     Deque(const Deque& other) : Deque() {
         for (const auto& item : other) {
             push_back(item);
         }
     }
 
-    // ÒÆ¶¯¹¹Ôìº¯Êı
+    // ç§»åŠ¨æ„é€ å‡½æ•°
     Deque(Deque&& other) noexcept {
-        // ÒÆ¶¯×ÊÔ´...
+        // ç§»åŠ¨èµ„æº...
     }
 
     ~Deque() = default;
@@ -156,7 +156,7 @@ public:
     Iterator end() { return Iterator(this, back_chunk, back_offset); }
 };
 
-// Ê¹ÓÃÊ¾Àı
+// ä½¿ç”¨ç¤ºä¾‹
 int main() {
     Deque<int> dq;
     for (int i = 0; i < 1000; ++i) {
@@ -169,9 +169,9 @@ int main() {
     std::cout << "First element: " << dq[0] << "\n";
     std::cout << "Last element: " << dq[dq.size()-1] << "\n";
 
-    // Ê¹ÓÃµü´úÆ÷±éÀú
+    // ä½¿ç”¨è¿­ä»£å™¨éå†
     for (auto it = dq.begin(); it != dq.end(); ++it) {
-        // ´¦ÀíÔªËØ...
+        // å¤„ç†å…ƒç´ ...
     }
 
     return 0;
