@@ -69,13 +69,17 @@ private:
 // Logger 类
 class Logger {
 public:
-    Logger(const std::string& filename, LogLevel level = LogLevel::INFO)
-    : log_file_(filename, std::ios::out | std::ios::app), exit_flag_(false),
+    Logger(const std::string& filename, LogLevel level = LogLevel::INFO, 
+          size_t max_size = 10*1024*1024)
+    : filename_(filename), max_file_size_(max_size),
+      current_file_size_(0), 
+      log_file_(filename, std::ios::out | std::ios::app), exit_flag_(false),
     current_level_(level) {
         if (!log_file_.is_open()) {
             throw std::runtime_error("无法打开日志文件");
         }
         worker_thread_ = std::thread(&Logger::processQueue, this);
+        initFileSize();
     }
 
     ~Logger() {
@@ -100,11 +104,64 @@ public:
     }
 
 private:
+    void initFileSize() {
+        std::ifstream in(filename_, std::ifstream::ate | std::ifstream::binary);
+        if (in.is_open()) {
+            current_file_size_ = in.tellg();
+        }
+    }
+
+    void processQueue() {
+        std::string msg;
+        while (log_queue_.pop(msg)) {
+            if (needRotate(msg.size())) {
+                rotateFile();
+            }
+            
+            log_file_ << msg << std::endl;
+            std::cout << msg << std::endl;
+            current_file_size_ += msg.size() + 1;
+
+            log_file_.flush();  
+        }
+    }
+
+    bool needRotate(size_t new_msg_size) const {
+        return (current_file_size_ + new_msg_size + 1) > max_file_size_;
+    }
+
+    void rotateFile() {
+        if (log_file_.is_open()) {
+            log_file_.close();
+        }
+
+        auto now = std::chrono::system_clock::now();
+        std::time_t t = std::chrono::system_clock::to_time_t(now);
+        std::tm tm = *std::localtime(&t);
+        
+        char buffer[32];
+        std::strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M%S", &tm);
+        std::string new_name = filename_ + "_" + buffer + ".log";
+
+        std::rename(filename_.c_str(), new_name.c_str());
+
+        log_file_.open(filename_, std::ios::out | std::ios::trunc);
+        if (!log_file_.is_open()) {
+            throw std::runtime_error("无法重新打开日志文件");
+        }
+        
+        current_file_size_ = 0;
+    }
+
+private:
     LogQueue log_queue_;
     std::thread worker_thread_;
     std::ofstream log_file_;
     std::atomic<bool> exit_flag_;
     std::atomic<LogLevel> current_level_;
+    std::string filename_;
+    size_t max_file_size_;
+    size_t current_file_size_;
 
     // 在Logger类内添加私有方法
     std::string getTimestamp() {
@@ -129,13 +186,6 @@ private:
 
         snprintf(timestamp + 19, sizeof(timestamp)-19, ".%03d", static_cast<int>(ms.count()));
         return timestamp;
-    }
-
-    void processQueue() {
-        std::string msg;
-        while (log_queue_.pop(msg)) {
-            log_file_ << msg << std::endl;
-        }
     }
 
     // 修改格式化方法
@@ -187,7 +237,7 @@ private:
 // 使用示例
 int main() {
     try {
-        Logger logger("log.txt");
+        Logger logger("log.txt", LogLevel::DEBUG, 10*1024*1024);
 
         logger.log(LogLevel::INFO, "Starting application.");
 
