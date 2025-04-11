@@ -1,22 +1,21 @@
-#include "HttpSession.h"
 #include "HttpGetSession.h"
-#include "HttpPostSession.h"
+#include "FileTransferSession.h"
 
 namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 
-HttpSession::HttpSession(tcp::socket socket) : socket_(std::move(socket)) {}
+HttpGetSession::HttpGetSession(tcp::socket socket) : socket_(std::move(socket)) {}
 
-HttpSession::~HttpSession() {
-    std::cout << "Connection closed" << std::endl;
+HttpGetSession::~HttpGetSession() {
+    std::cout << "GET session closed" << std::endl;
 }
 
-void HttpSession::Start() {
+void HttpGetSession::Start() {
     socket_.set_option(tcp::no_delay(true));
     ReadRequest();
 }
 
-void HttpSession::ReadRequest() {
+void HttpGetSession::ReadRequest() {
     auto self(shared_from_this());
     asio::async_read_until(
         socket_, request_buffer_, "\r\n\r\n",
@@ -29,20 +28,48 @@ void HttpSession::ReadRequest() {
             std::string request_line;
             std::getline(request_stream, request_line);
 
-            // 新增GET请求处理分支
-            if (request_line.find("GET") != std::string::npos) {
-                auto get_session = std::make_shared<HttpGetSession>(std::move(socket_));
-                get_session->Start();
-            } else if (request_line.find("POST") != std::string::npos) {
-                auto post_session = std::make_shared<HttpPostSession>(std::move(socket_));
-                post_session->Start();
-            } else {
-                SendResponse("HTTP/1.1 405 Method Not Allowed\r\n\r\n");
-            }
+            // 解析请求路径（示例路径：/download?file=filename）
+            size_t start = request_line.find(' ') + 1;
+            size_t end = request_line.find(' ', start);
+            std::string path = request_line.substr(start, end - start);
+
+            // 处理文件下载
+            HandleDownload(path);
         });
 }
 
-void HttpSession::SendResponse(const std::string &response) {
+void HttpGetSession::HandleDownload(const std::string &path) {
+    UrlParser parser(path);
+
+    // 获取文件参数
+    std::string filename = parser.GetParam("file");
+    std::cout << "file_name: " << filename << std::endl;
+    if (!filename.empty()) {
+        // 处理真实文件下载
+        auto file_transfer_session = std::make_shared<FileTransferSession>(std::move(socket_));
+        file_transfer_session->StartDownloadRealFile(filename);
+        return;
+    }
+
+    // 获取虚拟文件大小参数
+    std::string size_str = parser.GetParam("size");
+    if (!size_str.empty()) {
+        try {
+            size_t file_size = std::stoul(size_str);
+            std::cout << "file_size: " << file_size << std::endl;
+            auto file_transfer_session = std::make_shared<FileTransferSession>(std::move(socket_));
+            file_transfer_session->StartDownloadVirtualFile(file_size);
+            return;
+        } catch (...) {
+            SendResponse("HTTP/1.1 400 Bad Request\r\n\r\n");
+            return;
+        }
+    }
+
+    SendResponse("HTTP/1.1 400 Bad Request\r\n\r\n");
+}
+
+void HttpGetSession::SendResponse(const std::string &response) {
     auto self(shared_from_this());
     asio::async_write(socket_, asio::buffer(response),
                       [this, self](boost::system::error_code ec, std::size_t) {
@@ -54,7 +81,7 @@ void HttpSession::SendResponse(const std::string &response) {
 }
 
 // 服务端优雅关闭示例
-void HttpSession::GracefulShutdown() {
+void HttpGetSession::GracefulShutdown() {
     auto self(shared_from_this());
 
     // 1. 发送FIN（停止写入）

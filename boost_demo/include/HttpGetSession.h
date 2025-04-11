@@ -1,21 +1,24 @@
-#ifndef BOOST_DEMO_HTTPSESSION_H
-#define BOOST_DEMO_HTTPSESSION_H
+#ifndef BOOST_DEMO_HTTPGETSESSION_H
+#define BOOST_DEMO_HTTPGETSESSION_H
 
 #include <boost/asio.hpp>
 #include <iostream>
 #include <memory>
+#include "UrlDecode.hpp"
 
 namespace asio = boost::asio;
 using tcp = asio::ip::tcp;
 
-class HttpSession : public std::enable_shared_from_this<HttpSession> {
+class HttpGetSession : public std::enable_shared_from_this<HttpGetSession> {
 public:
-    explicit HttpSession(tcp::socket socket);
-    ~HttpSession();
+    explicit HttpGetSession(tcp::socket socket);
+    ~HttpGetSession();
+
     void Start();
 
 private:
     void ReadRequest();
+    void HandleDownload(const std::string &path);
     void SendResponse(const std::string &response);
     void GracefulShutdown();
 
@@ -25,4 +28,4 @@ private:
     std::string dummy_buffer_;
 };
 
-#endif //BOOST_DEMO_HTTPSESSION_H
+#endif //BOOST_DEMO_HTTPGETSESSION_H
