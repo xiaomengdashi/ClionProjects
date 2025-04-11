@@ -1,14 +1,21 @@
-#include "../include/HttpServer.hpp"
-#include <boost/asio.hpp>
+#include "HttpServer.h"
+
 #include <iostream>
 
-int main() {
-    try {
-        boost::asio::io_context io;
-        HttpServer server(io, 8080);
-        io.run();
-    } catch (const std::exception& e) {
-        std::cerr << "Server error: " << e.what() << "\n";
-    }
-    return 0;
+#include <boost/asio.hpp>
+
+namespace asio = boost::asio;
+using tcp = asio::ip::tcp;
+
+int main(int argc, char *argv[]) {
+  try {
+
+    asio::io_context io_context;
+    HttpServer server(io_context, 9090);
+    io_context.run();
+  } catch (std::exception &e) {
+    std::cerr << "Exception: " << e.what() << "\n";
+  }
+
+  return 0;
 }

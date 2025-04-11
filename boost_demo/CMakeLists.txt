@@ -3,7 +3,8 @@ project(boost_demo)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
+
 
 if(WIN32)
     include_directories(
@@ -37,5 +38,5 @@ file(GLOB_RECURSE SRC_FILES
 
 
 include_directories(${Boost_INCLUDE_DIRS})    # 包含Boost库的头文件目录
-add_executable(cppexp ${SRC_FILES} )
-target_link_libraries(cppexp  ${Boost_LIBRARIES}  ${WIN32_LIBS})    # 链接Boost库
+add_executable(HttpServer ${SRC_FILES} )
+target_link_libraries(HttpServer  ${Boost_LIBRARIES}  ${WIN32_LIBS})    # 链接Boost库

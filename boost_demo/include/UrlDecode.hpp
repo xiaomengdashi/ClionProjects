@@ -25,7 +25,7 @@ public:
     const std::unordered_map<std::string, std::string>& params() const { return params_; }
 
     // 获取指定参数值（带默认值）
-    std::string get_param(const std::string& key, const std::string& default_val = "") const {
+    std::string GetParam(const std::string& key, const std::string& default_val = "") const {
         auto it = params_.find(key);
         return it != params_.end() ? it->second : default_val;
     }
