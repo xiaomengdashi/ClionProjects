@@ -15,7 +15,7 @@ public:
     void Start();
 
 private:
-    void ReadRequest();
+    void ReadRequestHeader();
     void SendResponse(const std::string &response);
     void GracefulShutdown();
 

@@ -13,15 +13,15 @@ HttpSession::~HttpSession() {
 
 void HttpSession::Start() {
     socket_.set_option(tcp::no_delay(true));
-    ReadRequest();
+    ReadRequestHeader();
 }
 
-void HttpSession::ReadRequest() {
+void HttpSession::ReadRequestHeader() {
     auto self(shared_from_this());
     asio::async_read_until(
         socket_, request_buffer_, "\r\n\r\n",
         [this, self](boost::system::error_code ec,
-                     std::size_t bytes_transferred) {
+               std::size_t bytes_transferred) {
             if (ec)
                 return;
 
@@ -29,13 +29,28 @@ void HttpSession::ReadRequest() {
             std::string request_line;
             std::getline(request_stream, request_line);
 
-            // 新增GET请求处理分支
-            if (request_line.find("GET") != std::string::npos) {
-                auto get_session = std::make_shared<HttpGetSession>(std::move(socket_));
-                get_session->Start();
-            } else if (request_line.find("POST") != std::string::npos) {
-                auto post_session = std::make_shared<HttpPostSession>(std::move(socket_));
+            // 解析请求方法和路径
+            size_t start = request_line.find(' ') + 1;
+            size_t end = request_line.find(' ', start);
+            std::string path = request_line.substr(start, end - start);
+
+            // 解析Content-Length
+            std::string header;
+            size_t content_length = 0;
+            while (std::getline(request_stream, header) && header != "\r") {
+                if (header.find("Content-Length:") != std::string::npos) {
+                    content_length = std::stoul(header.substr(16));
+                    break;
+                }
+            }
+
+            // 根据请求方法创建子会话
+            if (request_line.find("POST") != std::string::npos) {
+                auto post_session = std::make_shared<HttpPostSession>(std::move(socket_), content_length);
                 post_session->Start();
+            } else if (request_line.find("GET") != std::string::npos) {
+                auto get_session = std::make_shared<HttpGetSession>(std::move(socket_), path);
+                get_session->Start();
             } else {
                 SendResponse("HTTP/1.1 405 Method Not Allowed\r\n\r\n");
             }

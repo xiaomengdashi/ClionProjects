@@ -1,57 +1,27 @@
 #include "HttpPostSession.h"
 
-namespace asio = boost::asio;
-using tcp = asio::ip::tcp;
-
-HttpPostSession::HttpPostSession(tcp::socket socket) : socket_(std::move(socket)) {}
+HttpPostSession::HttpPostSession(tcp::socket socket, std::size_t content_length)
+    : HttpSessionBase(std::move(socket)), content_length_(content_length) {}
 
 HttpPostSession::~HttpPostSession() {
     std::cout << "POST session closed" << std::endl;
 }
 
-void HttpPostSession::Start() {
-    socket_.set_option(tcp::no_delay(true));
-    ReadRequest();
-}
+void HttpPostSession::HandleRequest() {
+    // 创建临时文件
+    temp_file_path_ = "uploaded_file.tmp";
+    output_file_.open(temp_file_path_, std::ios::binary);
 
-void HttpPostSession::ReadRequest() {
-    auto self(shared_from_this());
-    asio::async_read_until(
-        socket_, request_buffer_, "\r\n\r\n",
-        [this, self](boost::system::error_code ec,
-                     std::size_t bytes_transferred) {
-            if (ec)
-                return;
+    // 处理缓冲区现有数据
+    const size_t preloaded = request_buffer_.size();
+    if (preloaded > 0) {
+        // 立即处理已读取的body数据
+        received_bytes_ += preloaded;
+        output_file_ << &request_buffer_; // 直接写入文件
+    }
 
-            std::istream request_stream(&request_buffer_);
-            std::string request_line;
-            std::getline(request_stream, request_line);
-
-            // 解析Content-Length
-            std::string header;
-            while (std::getline(request_stream, header) && header != "\r") {
-                if (header.find("Content-Length:") != std::string::npos) {
-                    content_length_ = std::stoul(header.substr(16));
-                    std::cout << content_length_ << std::endl;
-                    break;
-                }
-            }
-
-            // 创建临时文件
-            temp_file_path_ = "uploaded_file.tmp";
-            output_file_.open(temp_file_path_, std::ios::binary);
-
-            // 处理缓冲区现有数据
-            const size_t preloaded = request_buffer_.size();
-            if (preloaded > 0) {
-                // 立即处理已读取的body数据
-                received_bytes_ += preloaded;
-                output_file_ << &request_buffer_; // 直接写入文件
-            }
-
-            // 读取剩余数据
-            ReadBody();
-        });
+    // 读取剩余数据
+    ReadBody();
 }
 
 void HttpPostSession::ReadBody() {
@@ -111,40 +81,4 @@ void HttpPostSession::ReadBody() {
             // 继续读取
             ReadBody();
         });
-}
-
-void HttpPostSession::SendResponse(const std::string &response) {
-    auto self(shared_from_this());
-    asio::async_write(socket_, asio::buffer(response),
-                      [this, self](boost::system::error_code ec, std::size_t) {
-                          if (!ec) {
-                              // 关闭连接
-                              GracefulShutdown();
-                          }
-                      });
-}
-
-// 服务端优雅关闭示例
-void HttpPostSession::GracefulShutdown() {
-    auto self(shared_from_this());
-
-    // 1. 发送FIN（停止写入）
-    boost::system::error_code ec;
-    socket_.shutdown(tcp::socket::shutdown_send, ec);
-    if (ec) {
-        std::cerr << "Shutdown error: " << ec.message() << std::endl;
-        return;
-    }
-
-    // 2. 继续读取客户端数据（直到收到FIN）
-    asio::async_read(socket_, asio::dynamic_buffer(dummy_buffer_),
-                     [this, self](boost::system::error_code ec, size_t) {
-                         std::cout << "Received data" << std::endl;
-                         if (ec == asio::error::eof) {
-                             // 3. 安全关闭连接
-                             socket_.close();
-                         } else if (ec) {
-                             std::cerr << "Read error: " << ec.message() << std::endl;
-                         }
-                     });
 }
