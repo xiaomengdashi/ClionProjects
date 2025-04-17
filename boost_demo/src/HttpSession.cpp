@@ -54,18 +54,20 @@ void HttpSession::ReadRequestHeader() {
             } else {
                 SendResponse("HTTP/1.1 405 Method Not Allowed\r\n\r\n");
             }
-        });
+        }
+    );
 }
 
 void HttpSession::SendResponse(const std::string &response) {
     auto self(shared_from_this());
     asio::async_write(socket_, asio::buffer(response),
-                      [this, self](boost::system::error_code ec, std::size_t) {
-                          if (!ec) {
-                              // 关闭连接
-                              GracefulShutdown();
-                          }
-                      });
+        [this, self](boost::system::error_code ec, std::size_t) {
+            if (!ec) {
+                // 关闭连接
+                GracefulShutdown();
+            }
+        }
+    );
 }
 
 // 服务端优雅关闭示例
@@ -82,13 +84,14 @@ void HttpSession::GracefulShutdown() {
 
     // 2. 继续读取客户端数据（直到收到FIN）
     asio::async_read(socket_, asio::dynamic_buffer(dummy_buffer_),
-                     [this, self](boost::system::error_code ec, size_t) {
-                         std::cout << "Received data" << std::endl;
-                         if (ec == asio::error::eof) {
-                             // 3. 安全关闭连接
-                             socket_.close();
-                         } else if (ec) {
-                             std::cerr << "Read error: " << ec.message() << std::endl;
-                         }
-                     });
+        [this, self](boost::system::error_code ec, size_t) {
+            std::cout << "Received data" << std::endl;
+            if (ec == asio::error::eof) {
+                // 3. 安全关闭连接
+                socket_.close();
+            } else if (ec) {
+                std::cerr << "Read error: " << ec.message() << std::endl;
+            }
+        }
+    );
 }

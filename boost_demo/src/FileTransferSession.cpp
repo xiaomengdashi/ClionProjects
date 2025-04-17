@@ -28,14 +28,15 @@ void FileTransferSession::StartDownloadRealFile(const std::string &file_path) {
            << "Content-Length: " << file_size << "\r\n\r\n";
 
     asio::async_write(socket_, asio::buffer(header.str()),
-                      [this, self = shared_from_this(), file_size,
-                       file = std::move(file)](boost::system::error_code ec,
-                                              std::size_t) mutable {
-                          if (!ec) {
-                              // 分块发送文件内容
-                              SendFileChunk(std::move(file), file_size);
-                          }
-                      });
+        [this, self = shared_from_this(), file_size,
+            file = std::move(file)](boost::system::error_code ec,
+            std::size_t) mutable {
+            if (!ec) {
+                // 分块发送文件内容
+                SendFileChunk(std::move(file), file_size);
+            }
+        }
+    );
 }
 
 void FileTransferSession::StartDownloadVirtualFile(const size_t file_size) {
@@ -67,18 +68,18 @@ void FileTransferSession::StartDownloadVirtualFile(const size_t file_size) {
     auto data = std::make_shared<std::vector<char>>(first_chunk, 'a');
 
     // 合并头和首块数据
-    std::vector<asio::const_buffer> buffers{asio::buffer(*header_str),
-                                            asio::buffer(*data)};
+    std::vector<asio::const_buffer> buffers{asio::buffer(*header_str), asio::buffer(*data)};
 
     asio::async_write(socket_, buffers,
-                      [this, self = shared_from_this(), header_str, data,
-                       sent_bytes = first_chunk](boost::system::error_code ec, std::size_t) {
-                          if (!ec && sent_bytes < file_size_) {
-                              SendVirtualData(sent_bytes); // 继续发送剩余分片
-                          } else if (ec) {
-                              GracefulShutdown();
-                          }
-                      });
+        [this, self = shared_from_this(), header_str, data,
+        sent_bytes = first_chunk](boost::system::error_code ec, std::size_t) {
+            if (!ec && sent_bytes < file_size_) {
+                SendVirtualData(sent_bytes); // 继续发送剩余分片
+            } else if (ec) {
+                GracefulShutdown();
+            }
+        }
+    );
 }
 
 void FileTransferSession::SendFileChunk(std::ifstream file, std::streamsize file_size) {
@@ -92,18 +93,19 @@ void FileTransferSession::SendFileChunk(std::ifstream file, std::streamsize file
     size_t bytes_read = file.gcount();
 
     asio::async_write(socket_, asio::buffer(buffer->data(), bytes_read),
-                      [this, self, file = std::move(file), file_size, buffer](
-                          boost::system::error_code ec, std::size_t) mutable {
-                          if (ec || file.eof()) {
-                              output_file_.close();
-                              socket_.shutdown(asio::socket_base::shutdown_send);
-                              // 传输完成或出错
-                              return;
-                          }
+        [this, self, file = std::move(file), file_size, buffer](
+            boost::system::error_code ec, std::size_t) mutable {
+            if (ec || file.eof()) {
+                output_file_.close();
+                socket_.shutdown(asio::socket_base::shutdown_send);
+                // 传输完成或出错
+                return;
+            }
 
-                          // 继续发送下一块
-                          SendFileChunk(std::move(file), file_size);
-                      });
+            // 继续发送下一块
+            SendFileChunk(std::move(file), file_size);
+        }
+    );
 }
 
 void FileTransferSession::SendVirtualData(size_t sent_bytes) {
@@ -115,25 +117,28 @@ void FileTransferSession::SendVirtualData(size_t sent_bytes) {
         std::make_shared<std::vector<char>>(std::min(chunk_size, remaining), 'a');
 
     asio::async_write(socket_, asio::buffer(*data),
-                      [this, self, data, sent_bytes](boost::system::error_code ec,
-                                                   std::size_t bytes_transferred) {
-                          if (!ec && (sent_bytes + bytes_transferred) < file_size_) {
-                              SendVirtualData(sent_bytes + bytes_transferred);
-                          } else {
-                              GracefulShutdown();
-                          }
-                      });
+        [this, self, data, sent_bytes](boost::system::error_code ec,
+                                    std::size_t bytes_transferred) {
+            if (!ec && (sent_bytes + bytes_transferred) < file_size_) {
+                SendVirtualData(sent_bytes + bytes_transferred);
+            } else {
+                GracefulShutdown();
+            }
+        }
+    );
 }
 
 void FileTransferSession::SendResponse(const std::string &response) {
     auto self(shared_from_this());
+
     asio::async_write(socket_, asio::buffer(response),
-                      [this, self](boost::system::error_code ec, std::size_t) {
-                          if (!ec) {
-                              // 关闭连接
-                              GracefulShutdown();
-                          }
-                      });
+        [this, self](boost::system::error_code ec, std::size_t) {
+            if (!ec) {
+                // 关闭连接
+                GracefulShutdown();
+            }
+        }
+    );
 }
 
 // 服务端优雅关闭示例
@@ -150,13 +155,14 @@ void FileTransferSession::GracefulShutdown() {
 
     // 2. 继续读取客户端数据（直到收到FIN）
     asio::async_read(socket_, asio::dynamic_buffer(dummy_buffer_),
-                     [this, self](boost::system::error_code ec, size_t) {
-                         std::cout << "Received data" << std::endl;
-                         if (ec == asio::error::eof) {
-                             // 3. 安全关闭连接
-                             socket_.close();
-                         } else if (ec) {
-                             std::cerr << "Read error: " << ec.message() << std::endl;
-                         }
-                     });
+        [this, self](boost::system::error_code ec, size_t) {
+            std::cout << "Received data" << std::endl;
+            if (ec == asio::error::eof) {
+                // 3. 安全关闭连接
+                socket_.close();
+            } else if (ec) {
+                std::cerr << "Read error: " << ec.message() << std::endl;
+            }
+        }
+    );
 }

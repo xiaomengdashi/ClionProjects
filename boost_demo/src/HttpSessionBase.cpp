@@ -34,13 +34,14 @@ void HttpSessionBase::GracefulShutdown() {
 
     // 2. 继续读取客户端数据（直到收到FIN）
     asio::async_read(socket_, asio::dynamic_buffer(dummy_buffer_),
-                     [this, self](boost::system::error_code ec, size_t) {
-                         std::cout << "Received data" << std::endl;
-                         if (ec == asio::error::eof) {
-                             // 3. 安全关闭连接
-                             socket_.close();
-                         } else if (ec) {
-                             std::cerr << "Read error: " << ec.message() << std::endl;
-                         }
-                     });
+        [this, self](boost::system::error_code ec, size_t) {
+            std::cout << "Received data" << std::endl;
+            if (ec == asio::error::eof) {
+                // 3. 安全关闭连接
+                socket_.close();
+            } else if (ec) {
+                std::cerr << "Read error: " << ec.message() << std::endl;
+            }
+        }
+    );
 }
