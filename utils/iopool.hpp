@@ -25,7 +25,7 @@ namespace util {
 
     protected:
         boost::asio::io_context context_;
-        boost::asio::iocontext::strand strand_;
+        boost::asio::io_context::strand strand_;
     };
 
     using io_ptr_t = std::shared_ptr<io_t>;
@@ -69,7 +69,7 @@ namespace util {
                 threads_.emplace_back([i, prefix_name, this](){
                     if (!prefix_name.empty()) {
                         std::string name = prefix_name + std::to_string(i);
-                        ::prtcl(PR_SET_NAME, name.c_str());
+                        ::prctl(PR_SET_NAME, name.c_str());
                     }
 
                     set_sched(i);
@@ -216,7 +216,7 @@ namespace util {
         std::mutex mutex_;
         bool stopped_ = true;
         std::size_t  next_ = 0;
-        std::vector<boost::asio::executor_work_guard<boost::asio::io_context::executor_type> works_;
+        std::vector<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> works_;
     };
 
     using iopool_ptr_t = std::shared_ptr<iopool>;
@@ -236,7 +236,7 @@ namespace util {
             CPU_ZERO(&cpu_mask_);
             CPU_SET(cpu_scheds_[thread_id], &cpu_mask_);
 
-            sched_setaffinity(0, sizeof(cpu_mask_), &cpu_mask_)
+            sched_setaffinity(0, sizeof(cpu_mask_), &cpu_mask_);
             struct sched_param param;
             param.sched_priority = sched_get_priority_max(SCHED_FIFO);
             if (0 != pthread_setschedparam(pthread_self(), SCHED_FIFO, &param))
