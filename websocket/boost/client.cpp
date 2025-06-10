@@ -23,8 +23,11 @@ int main()
         net::io_context ioc;
         ssl::context ctx{ssl::context::tlsv12_client};
 
-        // 忽略自签名证书，仅用于测试
-        ctx.set_verify_mode(ssl::verify_none);
+        // 1. 设置为验证对端
+        ctx.set_verify_mode(ssl::verify_peer);
+
+        // 2. 加载 CA 证书（或自签名证书）
+        ctx.load_verify_file("server-cert.pem");
 
         // 解析域名
         tcp::resolver resolver{ioc};
@@ -38,6 +41,9 @@ int main()
 
         // SSL握手
         stream.handshake(ssl::stream_base::client);
+
+        // 3. 可选：设置主机名校验（C++17 及以上）
+        SSL_set1_host(stream.native_handle(), host.c_str());
 
         // WebSocket握手
         websocket::stream<beast::ssl_stream<tcp::socket>> ws{std::move(stream)};
