@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.10)
+project(wss_server)
+find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(OpenSSL REQUIRED)
+add_executable(wss_server server.cpp)
+target_link_libraries(wss_server Boost::system Boost::thread OpenSSL::SSL OpenSSL::Crypto pthread)
+add_executable(client client.cpp)
+target_link_libraries(client Boost::system Boost::thread OpenSSL::SSL OpenSSL::Crypto pthread)

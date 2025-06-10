@@ -4,8 +4,8 @@ const fs = require('fs');
 
 // 读取证书和私钥
 const serverOptions = {
-  cert: fs.readFileSync('server-cert.pem'),
-  key: fs.readFileSync('server-key.pem')
+  cert: fs.readFileSync('../server-cert.pem'),
+  key: fs.readFileSync('../server-key.pem')
 };
 
 // 创建HTTPS服务器
