@@ -155,8 +155,8 @@ bool WebSocketSSLClient::connect_server() {
     std::cout << "WebSocket 握手成功！" << std::endl;
 
     // 读取欢迎消息
-   // std::string msg = recv_ws_frame();
-    //if (!msg.empty()) std::cout << "收到: " << msg << std::endl;
+    std::string msg = recv_ws_frame();
+    if (!msg.empty()) std::cout << "收到: " << msg << std::endl;
     return true;
 }
 
