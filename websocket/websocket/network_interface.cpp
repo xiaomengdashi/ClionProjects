@@ -8,10 +8,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <map>
+#include <memory>
 #include "debug_log.h"
 #include "network_interface.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+
+// 假设 passwd 是私钥密码，这里简单定义，实际使用时可按需修改
+const char* passwd = NULL; 
+// 假设 ca_cert、server_cert 和 key 分别是 CA 证书、服务端证书和私钥文件路径，实际使用时可按需修改
+const char* ca_cert = "ca-cert.pem"; 
+const char* server_cert = "server-cert.pem"; 
+const char* key = "key.pem"; 
 
 Network_Interface *Network_Interface::m_network_interface = NULL;
 
@@ -21,6 +31,12 @@ Network_Interface::Network_Interface():
         websocket_handler_map_(),
         ctx(nullptr)
 {
+    // 初始化
+    SSLeay_add_ssl_algorithms();
+    OpenSSL_add_all_algorithms();
+    SSL_load_error_strings();
+    ERR_load_BIO_strings();
+
     ctx = create_context();
     configure_context(ctx);
     if(0 != init())
@@ -36,39 +52,83 @@ Network_Interface::~Network_Interface()
 
 SSL_CTX* Network_Interface::create_context()
 {
-    const SSL_METHOD *method;
     SSL_CTX *ctx;
-
-    method = SSLv23_server_method();
-    ctx = SSL_CTX_new(method);
+    // 我们使用SSL V3,V2
+    ctx = SSL_CTX_new(SSLv23_method());
     if (!ctx) {
         perror("Unable to create SSL context");
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
-
     return ctx;
+}
+
+// 自定义删除器，用于智能指针管理 EVP_PKEY
+struct EVPPKeyDeleter {
+    void operator()(EVP_PKEY* pkey) {
+        if (pkey) {
+            EVP_PKEY_free(pkey);
+        }
+    }
+};
+
+// 错误处理函数
+void handle_openssl_error(const std::string& message) {
+    ERR_print_errors_fp(stderr);
+    fprintf(stderr, "%s\n", message.c_str());
+    exit(EXIT_FAILURE);
 }
 
 void Network_Interface::configure_context(SSL_CTX *ctx)
 {
     SSL_CTX_set_ecdh_auto(ctx, 1);
 
-    // 加载证书和私钥
-    if (SSL_CTX_use_certificate_file(ctx, "cert.pem", SSL_FILETYPE_PEM) <= 0) {
-        ERR_print_errors_fp(stderr);
+    // 要求校验对方证书
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+
+    // 加载CA的证书
+    if (SSL_CTX_load_verify_locations(ctx, ca_cert, NULL) != 1) {
+        handle_openssl_error("Failed to load CA certificate");
+    }
+
+    // 加载自己的证书链
+    if (SSL_CTX_use_certificate_chain_file(ctx, server_cert) <= 0) {
+        handle_openssl_error("Failed to load server certificate chain");
+    }
+
+    // 打开私钥文件
+    FILE *key_file = fopen(key, "r");
+    if (!key_file) {
+        perror("Failed to open private key file");
         exit(EXIT_FAILURE);
     }
 
-    if (SSL_CTX_use_PrivateKey_file(ctx, "key.pem", SSL_FILETYPE_PEM) <= 0 ) {
-        ERR_print_errors_fp(stderr);
+    // 使用智能指针管理 EVP_PKEY
+    std::unique_ptr<EVP_PKEY, EVPPKeyDeleter> pkey(PEM_read_PrivateKey(key_file, NULL, NULL, (void*)passwd));
+    fclose(key_file);
+    if (!pkey) {
+        handle_openssl_error("Failed to read private key");
+    }
+
+    // 验证私钥算法是否为 RSA
+    if (EVP_PKEY_id(pkey.get()) != EVP_PKEY_RSA) {
+        fprintf(stderr, "Private key is not an RSA key\n");
         exit(EXIT_FAILURE);
     }
 
+    // 将私钥设置到 SSL 上下文中
+    if (SSL_CTX_use_PrivateKey(ctx, pkey.get()) <= 0) {
+        handle_openssl_error("Failed to set private key");
+    }
+
+    // 判定私钥是否正确  
     if (!SSL_CTX_check_private_key(ctx)) {
         fprintf(stderr, "Private key does not match the public certificate\n");
         exit(EXIT_FAILURE);
     }
+
+    // 设置验证深度
+    SSL_CTX_set_verify_depth(ctx, 1);
 }
 
 int Network_Interface::init()
