@@ -35,7 +35,6 @@ Network_Interface::Network_Interface():
     SSLeay_add_ssl_algorithms();
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
-    ERR_load_BIO_strings();
 
     ctx = create_context();
     configure_context(ctx);

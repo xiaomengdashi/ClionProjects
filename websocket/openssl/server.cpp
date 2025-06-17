@@ -328,14 +328,21 @@ void WebSocketSSLServer::run() {
 
     // 创建一个新的 SSL 上下文，使用 TLS 服务器方法
     ctx_ = SSL_CTX_new(TLS_server_method());
-    // 从 PEM 文件中加载服务器证书
-    if (SSL_CTX_use_certificate_file(ctx_, "server-cert.pem", SSL_FILETYPE_PEM) <= 0) {
+    
+    // 加载 CA 证书（可选，若需要客户端验证）
+    if (SSL_CTX_load_verify_locations(ctx_, "ca.pem", nullptr) != 1) {
+        ERR_print_errors_fp(stderr);
+        return;
+    }
+
+    // 从 PEM 文件中加载服务器证书，修改为你的证书文件名
+    if (SSL_CTX_use_certificate_file(ctx_, "server.crt", SSL_FILETYPE_PEM) <= 0) {
         // 打印 OpenSSL 错误信息到标准错误输出
         ERR_print_errors_fp(stderr);
         return;
     }
-    // 从 PEM 文件中加载服务器私钥
-    if (SSL_CTX_use_PrivateKey_file(ctx_, "server-key.pem", SSL_FILETYPE_PEM) <= 0) {
+    // 从 PEM 文件中加载服务器私钥，修改为你的私钥文件名
+    if (SSL_CTX_use_PrivateKey_file(ctx_, "server.key", SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stderr);
         return;
     }

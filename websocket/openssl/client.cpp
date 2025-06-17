@@ -113,6 +113,16 @@ bool WebSocketSSLClient::connect_server() {
     OpenSSL_add_all_algorithms();
 
     ctx_ = SSL_CTX_new(TLS_client_method());
+    
+    // 加载 CA 证书，用于验证服务器证书
+    if (SSL_CTX_load_verify_locations(ctx_, "ca.pem", nullptr) != 1) {
+        std::cerr << "Failed to load CA certificate" << std::endl;
+        return false;
+    }
+    
+    // 开启证书验证
+    SSL_CTX_set_verify(ctx_, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, nullptr);
+
     ssl_ = SSL_new(ctx_);
 
     sockfd_ = socket(AF_INET, SOCK_STREAM, 0);
@@ -126,8 +136,10 @@ bool WebSocketSSLClient::connect_server() {
     }
 
     SSL_set_fd(ssl_, sockfd_);
-    if (SSL_connect(ssl_) <= 0) {
-        std::cerr << "SSL connect failed" << std::endl;
+    if (SSL_connect(ssl_) != 1) {
+        int err = SSL_get_error(ssl_, SSL_connect(ssl_));
+        std::cerr << "SSL connect failed, error code: " << err << std::endl;
+        ERR_print_errors_fp(stderr);
         return false;
     }
 
