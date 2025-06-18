@@ -1,3 +1,5 @@
+#include <cstdint>
+#include <cstring>
 #include "websocket_request.h"
 
 Websocket_Request::Websocket_Request():
@@ -70,22 +72,47 @@ int Websocket_Request::fetch_masking_key(char *msg, int &pos){
 	return 0;
 }
 
+// 自定义 ntohll 函数
+uint64_t ntohll(uint64_t value) {
+    static const int num = 42;
+    if (*reinterpret_cast<const char*>(&num) == num) {
+        // 大端字节序，无需转换
+        return value;
+    } else {
+        // 小端字节序，进行转换
+        uint64_t swapped = ((value >> 56) & 0x00000000000000FF) |
+                           ((value >> 40) & 0x000000000000FF00) |
+                           ((value >> 24) & 0x0000000000FF0000) |
+                           ((value >> 8)  & 0x00000000FF000000) |
+                           ((value << 8)  & 0x000000FF00000000) |
+                           ((value << 24) & 0x0000FF0000000000) |
+                           ((value << 40) & 0x00FF000000000000) |
+                           ((value << 56) & 0xFF00000000000000);
+        return swapped;
+    }
+}
+
 int Websocket_Request::fetch_payload_length(char *msg, int &pos){
-	payload_length_ = msg[pos] & 0x7f;
-	pos++;
-	if(payload_length_ == 126){
-		uint16_t length = 0;
-		memcpy(&length, msg + pos, 2);
-		pos += 2;
-		payload_length_ = ntohs(length);
-	}
-	else if(payload_length_ == 127){
-		uint32_t length = 0;
-		memcpy(&length, msg + pos, 4);
-		pos += 4;
-		payload_length_ = ntohl(length);
-	}
-	return 0;
+    // 确保 msg 不为空指针
+    if (msg == nullptr) {
+        return -1;
+    }
+    // 先获取低 7 位作为初始的负载长度
+    payload_length_ = static_cast<uint8_t>(msg[pos]) & 0x7f;
+    pos++;
+
+    if (payload_length_ == 126){
+        uint16_t length = 0;
+        memcpy(&length, msg + pos, 2);
+        pos += 2;
+        payload_length_ = ntohs(length);
+    } else if (payload_length_ == 127){
+        uint64_t length = 0;
+        memcpy(&length, msg + pos, 8);
+        pos += 8;
+        payload_length_ = ntohll(length);
+    }
+    return 0;
 }
 
 int Websocket_Request::fetch_payload(char *msg, int &pos){
