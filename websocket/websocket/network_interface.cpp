@@ -29,7 +29,11 @@ Network_Interface::Network_Interface():
         epollfd_(0),
         listenfd_(0),
         websocket_handler_map_(),
-        ctx(nullptr)
+        ctx(nullptr),
+        inotify_fd_(-1),
+        inotify_wd_ca_(-1),
+        inotify_wd_server_(-1),
+        inotify_wd_key_(-1)
 {
     // 初始化
     SSLeay_add_ssl_algorithms();
@@ -38,6 +42,7 @@ Network_Interface::Network_Interface():
 
     ctx = create_context();
     configure_context(ctx);
+    init_inotify();  // 初始化 inotify
     if(0 != init())
         exit(1);
 }
@@ -157,6 +162,68 @@ int Network_Interface::init()
     return 0;
 }
 
+void Network_Interface::init_inotify() {
+    inotify_fd_ = inotify_init();
+    if (inotify_fd_ == -1) {
+        perror("inotify_init");
+        exit(EXIT_FAILURE);
+    }
+
+    // 监听 CA 证书文件
+    inotify_wd_ca_ = inotify_add_watch(inotify_fd_, ca_cert, IN_MODIFY);
+    if (inotify_wd_ca_ == -1) {
+        perror("inotify_add_watch for CA cert");
+        exit(EXIT_FAILURE);
+    }
+
+    // 监听服务端证书文件
+    inotify_wd_server_ = inotify_add_watch(inotify_fd_, server_cert, IN_MODIFY);
+    if (inotify_wd_server_ == -1) {
+        perror("inotify_add_watch for server cert");
+        exit(EXIT_FAILURE);
+    }
+
+    // 监听私钥文件
+    inotify_wd_key_ = inotify_add_watch(inotify_fd_, key, IN_MODIFY);
+    if (inotify_wd_key_ == -1) {
+        perror("inotify_add_watch for private key");
+        exit(EXIT_FAILURE);
+    }
+
+    // 将 inotify 文件描述符添加到 epoll 中
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = inotify_fd_;
+    if (epoll_ctl(epollfd_, EPOLL_CTL_ADD, inotify_fd_, &ev) == -1) {
+        perror("epoll_ctl: inotify_fd");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void Network_Interface::handle_inotify_event() {
+    char buffer[4096];
+    ssize_t len = read(inotify_fd_, buffer, sizeof(buffer));
+    if (len == -1) {
+        perror("read from inotify_fd");
+        return;
+    }
+
+    for (char *ptr = buffer; ptr < buffer + len; ) {
+        struct inotify_event *event = (struct inotify_event *)ptr;
+        if (event->mask & IN_MODIFY) {
+            reload_certificates();  // 重新加载证书
+        }
+        ptr += sizeof(struct inotify_event) + event->len;
+    }
+}
+
+void Network_Interface::reload_certificates() {
+    SSL_CTX_free(ctx);
+    ctx = create_context();
+    configure_context(ctx);
+    DEBUG_LOG("Certificates reloaded");
+}
+
 int Network_Interface::epoll_loop(){
     // 定义客户端地址结构体，用于存储客户端的地址信息
     struct sockaddr_in client_addr;
@@ -180,8 +247,12 @@ int Network_Interface::epoll_loop(){
         nfds = epoll_wait(epollfd_, events, MAXEVENTSSIZE, TIMEWAIT);
         // 遍历所有就绪的事件
         for(int i = 0; i < nfds; i++){
+            // 如果就绪事件的文件描述符是 inotify 文件描述符
+            if(events[i].data.fd == inotify_fd_) {
+                handle_inotify_event();  // 处理 inotify 事件
+            }
             // 如果就绪事件的文件描述符是监听套接字
-            if(events[i].data.fd == listenfd_){
+            else if(events[i].data.fd == listenfd_){
                 // 接受新的客户端连接，返回新的客户端套接字描述符
                 // client_addr 存储客户端地址信息
                 // clilen 存储客户端地址结构体的长度
