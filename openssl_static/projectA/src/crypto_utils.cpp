@@ -11,14 +11,30 @@
 namespace CryptoUtils {
 
 std::string sha256(const std::string& input) {
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
-    SHA256_Update(&sha256, input.c_str(), input.size());
-    SHA256_Final(hash, &sha256);
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    if (!ctx) {
+        throw std::runtime_error("Failed to create hash context");
+    }
+    
+    std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> ctx_guard(ctx, EVP_MD_CTX_free);
+    
+    if (EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr) != 1) {
+        throw std::runtime_error("Failed to initialize SHA256");
+    }
+    
+    if (EVP_DigestUpdate(ctx, input.c_str(), input.size()) != 1) {
+        throw std::runtime_error("Failed to update SHA256");
+    }
+    
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hash_len;
+    
+    if (EVP_DigestFinal_ex(ctx, hash, &hash_len) != 1) {
+        throw std::runtime_error("Failed to finalize SHA256");
+    }
     
     std::stringstream ss;
-    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+    for (unsigned int i = 0; i < hash_len; i++) {
         ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
     }
     return ss.str();

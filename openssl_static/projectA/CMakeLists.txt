@@ -20,6 +20,7 @@ set(SOURCES
     src/crypto_utils.cpp
     src/crypto_config.cpp
     src/crypto_logger.cpp
+    src/crypto_security.cpp
 )
 
 # Create static library
@@ -66,6 +67,21 @@ if(BUILD_TESTS)
     add_test(NAME CryptoUtilsTests COMMAND crypto_tests)
     
     set_target_properties(crypto_tests PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
+    )
+    
+    # 安全功能测试
+    add_executable(security_tests tests/test_crypto_security.cpp)
+    target_link_libraries(security_tests 
+        PRIVATE 
+        ProjectA 
+        GTest::gtest 
+        GTest::gtest_main
+    )
+    
+    add_test(NAME CryptoSecurityTests COMMAND security_tests)
+    
+    set_target_properties(security_tests PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
     )
 endif()
