@@ -1,0 +1,187 @@
+/**
+ * One Light theme for Prism.js
+ * Based on Atom One Light theme
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+  background: none;
+  text-shadow: none;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+  background: #fafafa !important;
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 0.3em;
+  border: 1px solid #e5e5e5;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+  background: #fafafa !important;
+}
+
+/* 确保所有 pre 标签都使用 One Light 背景 */
+pre {
+  background: #fafafa !important;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+/* 行内代码样式 */
+.inline-code,
+code.inline-code {
+  background: #f0f0f0 !important;
+  color: #e45649 !important;
+  border-color: #e5e5e5 !important;
+  padding: 0.2em 0.4em !important;
+  border-radius: 3px !important;
+  border: 1px solid #e5e5e5 !important;
+}
+
+.inline-code:hover,
+code.inline-code:hover {
+  background: #e5e5e5 !important;
+  border-color: #4078f2 !important;
+}
+
+/* 代码块样式 */
+.code-block,
+pre.code-block {
+  background: #fafafa !important;
+  color: #383a42 !important;
+  border-color: #e5e5e5 !important;
+}
+
+/* 代码块内的code标签 */
+.code-block code,
+pre.code-block code {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* Token styles - One Light */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #a0a1a7 !important;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #383a42 !important;
+}
+
+.token.selector,
+.token.tag {
+  color: #e45649 !important;
+}
+
+.token.property,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.attr-name,
+.token.deleted {
+  color: #986801 !important;
+}
+
+.token.string,
+.token.char,
+.token.attr-value,
+.token.builtin,
+.token.inserted {
+  color: #50a14f !important;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #0184bc !important;
+}
+
+.token.atrule,
+.token.keyword {
+  color: #a626a4 !important;
+}
+
+.token.function {
+  color: #4078f2 !important;
+}
+
+.token.class-name {
+  color: #986801 !important;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #e45649 !important;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* Line highlighting - One Light */
+.line-highlight {
+  background: rgba(64, 120, 242, 0.08);
+  background: linear-gradient(to right, rgba(64, 120, 242, 0.1) 70%, rgba(64, 120, 242, 0));
+}
+
+/* Line numbers - One Light */
+.line-numbers .line-numbers-rows {
+  border-right: 1px solid #e5e5e5;
+}
+
+.line-numbers-rows > span:before {
+  color: #a0a1a7;
+}
+
+/* Show language - One Light */
+.code-toolbar > .toolbar {
+  opacity: 1;
+}
+
+.code-toolbar > .toolbar > .toolbar-item > button {
+  background: #e5e5e5;
+  color: #383a42;
+  border: 1px solid #d0d0d0;
+}
+
+.code-toolbar > .toolbar > .toolbar-item > button:hover,
+.code-toolbar > .toolbar > .toolbar-item > button:focus {
+  background: #d0d0d0;
+  color: #4078f2;
+}

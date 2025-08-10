@@ -1,0 +1,195 @@
+/**
+ * GitHub theme for Prism.js
+ * Based on GitHub's syntax highlighting colors
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+  background: none;
+  text-shadow: none;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+  background: #f6f8fa !important;
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 6px;
+  border: 1px solid #d1d9e0;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+  background: #f6f8fa !important;
+}
+
+/* 确保所有 pre 标签都使用 GitHub 背景 */
+pre {
+  background: #f6f8fa !important;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+  background: rgba(175, 184, 193, 0.2) !important;
+  color: #24292e;
+}
+
+/* 行内代码样式 */
+.inline-code,
+code.inline-code {
+  background: #f6f8fa !important;
+  color: #d73a49 !important;
+  border-color: #e1e4e8 !important;
+  padding: 0.2em 0.4em !important;
+  border-radius: 3px !important;
+  border: 1px solid #e1e4e8 !important;
+}
+
+.inline-code:hover,
+code.inline-code:hover {
+  background: #e1e4e8 !important;
+  border-color: #0366d6 !important;
+}
+
+/* 代码块样式 */
+.code-block,
+pre.code-block {
+  background: #f6f8fa !important;
+  color: #24292e !important;
+  border-color: #e1e4e8 !important;
+}
+
+/* 代码块内的code标签 */
+.code-block code,
+pre.code-block code {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* 默认文本颜色 - 用于没有token类的普通文本 */
+pre[class*="language-"] code,
+.code-block code {
+  color: #24292e !important;
+}
+
+/* Token styles - GitHub */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #6a737d !important;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #24292e !important;
+}
+
+.token.selector,
+.token.tag {
+  color: #d73a49 !important;
+}
+
+.token.property,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.attr-name,
+.token.deleted {
+  color: #005cc5 !important;
+}
+
+.token.string,
+.token.char,
+.token.attr-value,
+.token.builtin,
+.token.inserted {
+  color: #032f62 !important;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #d73a49 !important;
+}
+
+.token.atrule,
+.token.keyword {
+  color: #d73a49 !important;
+}
+
+.token.function {
+  color: #6f42c1 !important;
+}
+
+.token.class-name {
+  color: #005cc5 !important;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #e36209 !important;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* Line highlighting - GitHub */
+.line-highlight {
+  background: rgba(3, 102, 214, 0.05);
+  background: linear-gradient(to right, rgba(3, 102, 214, 0.08) 70%, rgba(3, 102, 214, 0));
+}
+
+/* Line numbers - GitHub */
+.line-numbers .line-numbers-rows {
+  border-right: 1px solid #d1d9e0;
+}
+
+.line-numbers-rows > span:before {
+  color: #6a737d;
+}
+
+/* Show language - GitHub */
+.code-toolbar > .toolbar {
+  opacity: 1;
+}
+
+.code-toolbar > .toolbar > .toolbar-item > button {
+  background: #d1d9e0;
+  color: #24292e;
+  border: 1px solid #c9d1d9;
+}
+
+.code-toolbar > .toolbar > .toolbar-item > button:hover,
+.code-toolbar > .toolbar > .toolbar-item > button:focus {
+  background: #c9d1d9;
+  color: #0366d6;
+}

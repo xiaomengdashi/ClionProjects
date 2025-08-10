@@ -1,0 +1,187 @@
+/**
+ * Monokai theme for Prism.js
+ * Based on classic Monokai color scheme
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+  background: none;
+  text-shadow: none;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+  background: #272822 !important;
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 0.3em;
+  border: 1px solid #49483e;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+  background: #272822 !important;
+}
+
+/* 确保所有 pre 标签都使用 Monokai 背景 */
+pre {
+  background: #272822 !important;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+/* 行内代码样式 */
+.inline-code,
+code.inline-code {
+  background: #3e3d32 !important;
+  color: #f92672 !important;
+  border-color: #49483e !important;
+  padding: 0.2em 0.4em !important;
+  border-radius: 3px !important;
+  border: 1px solid #49483e !important;
+}
+
+.inline-code:hover,
+code.inline-code:hover {
+  background: #49483e !important;
+  border-color: #66d9ef !important;
+}
+
+/* 代码块样式 */
+.code-block,
+pre.code-block {
+  background: #272822 !important;
+  color: #f8f8f2 !important;
+  border-color: #3e3d32 !important;
+}
+
+/* 代码块内的code标签 */
+.code-block code,
+pre.code-block code {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* Token styles - Monokai */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #75715e !important;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #f8f8f2 !important;
+}
+
+.token.selector,
+.token.tag {
+  color: #f92672 !important;
+}
+
+.token.property,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.attr-name,
+.token.deleted {
+  color: #ae81ff !important;
+}
+
+.token.string,
+.token.char,
+.token.attr-value,
+.token.builtin,
+.token.inserted {
+  color: #e6db74 !important;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #f92672 !important;
+}
+
+.token.atrule,
+.token.keyword {
+  color: #f92672 !important;
+}
+
+.token.function {
+  color: #a6e22e !important;
+}
+
+.token.class-name {
+  color: #a6e22e !important;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #fd971f !important;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* Line highlighting - Monokai */
+.line-highlight {
+  background: rgba(249, 38, 114, 0.12);
+  background: linear-gradient(to right, rgba(249, 38, 114, 0.15) 70%, rgba(249, 38, 114, 0));
+}
+
+/* Line numbers - Monokai */
+.line-numbers .line-numbers-rows {
+  border-right: 1px solid #49483e;
+}
+
+.line-numbers-rows > span:before {
+  color: #75715e;
+}
+
+/* Show language - Monokai */
+.code-toolbar > .toolbar {
+  opacity: 1;
+}
+
+.code-toolbar > .toolbar > .toolbar-item > button {
+  background: #49483e;
+  color: #f8f8f2;
+  border: 1px solid #75715e;
+}
+
+.code-toolbar > .toolbar > .toolbar-item > button:hover,
+.code-toolbar > .toolbar > .toolbar-item > button:focus {
+  background: #75715e;
+  color: #66d9ef;
+}

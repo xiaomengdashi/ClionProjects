@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/favicon-32x32.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatHub - AI API 集成平台</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      
+      #app {
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      // 全局复制代码函数
+      window.copyCode = function(button) {
+        const codeBlock = button.closest('.code-block-wrapper').querySelector('code');
+        const text = codeBlock.textContent || codeBlock.innerText;
+        
+        navigator.clipboard.writeText(text).then(() => {
+          // 显示复制成功的反馈
+          const originalHTML = button.innerHTML;
+          button.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+          `;
+          button.style.color = '#4ecdc4';
+          
+          setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.style.color = '';
+          }, 2000);
+        }).catch(err => {
+          console.error('复制失败:', err);
+          // 降级方案：选中文本
+          const range = document.createRange();
+          range.selectNode(codeBlock);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+        });
+      }
+    </script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,192 @@
+/**
+ * One Dark Pro theme for Prism.js
+ * Based on One Dark Pro theme with enhanced contrast and deeper colors
+ */
+
+code[class*="language-"],
+pre[class*="language-"] {
+  background: none;
+  text-shadow: none;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 1em;
+  text-align: left;
+  white-space: pre;
+  word-spacing: normal;
+  word-break: normal;
+  word-wrap: normal;
+  line-height: 1.5;
+  tab-size: 4;
+  hyphens: none;
+}
+
+/* Code blocks */
+pre[class*="language-"] {
+  background: #21252b !important;
+  padding: 1em;
+  margin: 0.5em 0;
+  overflow: auto;
+  border-radius: 0.3em;
+  border: 1px solid #2c313c;
+}
+
+:not(pre) > code[class*="language-"],
+pre[class*="language-"] {
+  background: #21252b !important;
+}
+
+/* 确保所有 pre 标签都使用 One Dark Pro 背景 */
+pre {
+  background: #21252b !important;
+}
+
+/* Inline code */
+:not(pre) > code[class*="language-"] {
+  padding: 0.1em;
+  border-radius: 0.3em;
+  white-space: normal;
+}
+
+/* 行内代码样式 */
+.inline-code,
+code.inline-code {
+  background: #2c313c !important;
+  color: #ef596f !important;
+  border-color: #3e4451 !important;
+  padding: 0.2em 0.4em !important;
+  border-radius: 3px !important;
+  border: 1px solid #3e4451 !important;
+}
+
+.inline-code:hover,
+code.inline-code:hover {
+  background: #3e4451 !important;
+  border-color: #61afef !important;
+}
+
+/* 代码块样式 */
+.code-block,
+pre.code-block {
+  background: #21252b !important;
+  border-color: #2c313c !important;
+}
+
+/* 代码块内的code标签 */
+.code-block code,
+pre.code-block code {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* 默认文本颜色 - 用于没有token类的普通文本 */
+pre[class*="language-"] code,
+.code-block code {
+  color: #c5cad3 !important;
+}
+
+/* Token styles - One Dark Pro enhanced colors */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: #7f848e !important;
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: #c5cad3 !important;
+}
+
+.token.selector,
+.token.tag {
+  color: #ef596f !important;
+}
+
+.token.property,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.attr-name,
+.token.deleted {
+  color: #e5c07b !important;
+}
+
+.token.string,
+.token.char,
+.token.attr-value,
+.token.builtin,
+.token.inserted {
+  color: #89ca78 !important;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #2bbac5 !important;
+}
+
+.token.atrule,
+.token.keyword {
+  color: #d55fde !important;
+}
+
+.token.function {
+  color: #61afef !important;
+}
+
+.token.class-name {
+  color: #e5c07b !important;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: #ef596f !important;
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+
+.token.italic {
+  font-style: italic;
+}
+
+.token.entity {
+  cursor: help;
+}
+
+/* Line highlighting - One Dark Pro */
+.line-highlight {
+  background: rgba(97, 175, 239, 0.12);
+  background: linear-gradient(to right, rgba(97, 175, 239, 0.15) 70%, rgba(97, 175, 239, 0));
+}
+
+/* Line numbers - One Dark Pro */
+.line-numbers .line-numbers-rows {
+  border-right: 1px solid #2c313c;
+}
+
+.line-numbers-rows > span:before {
+  color: #7f848e;
+}
+
+/* Show language - One Dark Pro */
+.code-toolbar > .toolbar {
+  opacity: 1;
+}
+
+.code-toolbar > .toolbar > .toolbar-item > button {
+  background: #2c313c;
+  color: #c5cad3;
+  border: 1px solid #3e4451;
+}
+
+.code-toolbar > .toolbar > .toolbar-item > button:hover,
+.code-toolbar > .toolbar > .toolbar-item > button:focus {
+  background: #3e4451;
+  color: #61afef;
+}
