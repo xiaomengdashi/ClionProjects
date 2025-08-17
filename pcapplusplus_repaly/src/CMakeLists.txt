@@ -1,6 +1,11 @@
 # Source directory CMakeLists.txt
 
-# Add executable for send_pcap
+# Add subdirectories for common, client, and server components
+add_subdirectory(common)
+add_subdirectory(client)
+add_subdirectory(server)
+
+# Add executable for original send_pcap (for backward compatibility)
 add_executable(send_pcap send_pcap.cpp)
 
 # Platform-specific library linking
