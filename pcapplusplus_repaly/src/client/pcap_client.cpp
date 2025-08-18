@@ -125,36 +125,57 @@ bool PcapClient::startReplay() {
     running_.store(true);
     start_time_ = std::chrono::high_resolution_clock::now();
     
-    // 主回放循环
-    for (size_t i = 0; i < packet_delay_pairs_.size() && !interrupted_.load(); ++i) {
-        const auto& packet_pair = packet_delay_pairs_[i];
-        const PacketInfo& packet_info = packet_pair.first;
-        int delay_ms = packet_pair.second;
+    // 获取所有包的顺序信息
+    auto all_packets = packet_analyzer_->getAllPackets();
+    
+    // 主回放循环 - 基于PCAP包的原始顺序
+    for (size_t global_index = 0; global_index < all_packets.size() && !interrupted_.load(); ++global_index) {
+        const auto& packet_info = all_packets[global_index];
         
-        total_packets_.fetch_add(1);
-        
-        // 同步发送包
-        bool sent_success = synchronizedSendPacket(packet_info, static_cast<int>(i));
-        
-        if (sent_success) {
-            sent_packets_.fetch_add(1);
+        // 检查是否是客户端包
+        if (packet_info.direction == PacketDirection::CLIENT_TO_SERVER) {
+            // 等待轮到客户端发送
+            if (!waitForClientTurn(static_cast<int>(global_index))) {
+                std::cout << "等待客户端发送轮次超时，跳过包 " << global_index << std::endl;
+                continue;
+            }
+            
+            total_packets_.fetch_add(1);
+            
+            // 发送客户端包
+            bool sent_success = sendClientPacket(packet_info, static_cast<int>(global_index));
+            
+            if (sent_success) {
+                sent_packets_.fetch_add(1);
+            } else {
+                failed_packets_.fetch_add(1);
+            }
+            
+            // 检查下一包是否还是客户端包
+            bool next_is_client = false;
+            if (global_index + 1 < all_packets.size()) {
+                next_is_client = (all_packets[global_index + 1].direction == PacketDirection::CLIENT_TO_SERVER);
+            }
+            
+            if (next_is_client) {
+                // 下一包还是客户端包，计算延迟后继续发送
+                int delay_ms = calculateDelayToNextPacket(packet_info, all_packets[global_index + 1]);
+                if (delay_ms > 0) {
+                    executeDelay(delay_ms);
+                }
+            } else {
+                // 下一包是服务端包，切换到接收态
+                switchToReceiveMode(static_cast<int>(global_index + 1));
+            }
+            
+            // 每发送50个包显示一次进度
+            if (sent_packets_.load() % 50 == 0) {
+                std::cout << "客户端已发送: " << sent_packets_.load() 
+                          << " 包, 成功率: " << (sent_packets_.load() * 100.0 / total_packets_.load()) << "%" << std::endl;
+            }
         } else {
-            failed_packets_.fetch_add(1);
-        }
-        
-        // 更新共享内存状态
-        updateSharedMemoryState(static_cast<int>(i), sent_success);
-        
-        // 每发送50个包显示一次进度
-        if ((i + 1) % 50 == 0) {
-            std::cout << "客户端已发送: " << (i + 1) << "/" << packet_delay_pairs_.size() 
-                      << " 包, 成功: " << sent_packets_.load() 
-                      << ", 失败: " << failed_packets_.load() << std::endl;
-        }
-        
-        // 执行延迟（跳过第一个包）
-        if (i > 0 && delay_ms > 0 && !interrupted_.load()) {
-            executeDelay(delay_ms);
+            // 服务端包，等待服务端处理
+            waitForServerPacket(static_cast<int>(global_index));
         }
     }
     
@@ -364,6 +385,127 @@ void PcapClient::executeDelay(int delay_ms) {
 
 bool PcapClient::waitForServer(int timeout_ms) {
     return shm_manager_->waitForPeer(true, timeout_ms);
+}
+
+bool PcapClient::waitForClientTurn(int packet_index) {
+    SharedMemoryData* shm_data = shm_manager_->getData();
+    if (!shm_data) return false;
+    
+    auto start_time = std::chrono::steady_clock::now();
+    const int timeout_ms = 1000; // 1秒超时
+    
+    while (!interrupted_.load()) {
+        // 检查是否轮到发送这个包
+        if (shm_data->next_packet_index.load() == packet_index) {
+            return true;
+        }
+        
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start_time);
+        if (elapsed.count() >= timeout_ms) {
+            return false;
+        }
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+    
+    return false;
+}
+
+bool PcapClient::sendClientPacket(const PacketInfo& packet_info, int packet_index) {
+    // 发送包
+    bool sent_success = sendPacket(packet_info);
+    
+    // 更新共享内存状态
+    SharedMemoryData* shm_data = shm_manager_->getData();
+    if (shm_data != nullptr) {
+        shm_data->current_packet_index.store(packet_index);
+        shm_data->client_packet_sent.store(sent_success);
+        shm_data->last_send_time_us.store(SharedMemoryManager::getCurrentTimeMicros());
+        
+        // 客户端发送包后，更新共享内存状态
+        shm_data->next_packet_index.store(packet_index + 1); // 指向下一个包（可能是客户端或服务端）
+        
+        if (sent_success) {
+            shm_data->client_sent_count.fetch_add(1);
+            std::cout << "客户端发送包 " << packet_index+1 << " 成功" << std::endl;
+        } else {
+            shm_data->client_failed_count.fetch_add(1);
+            std::cout << "客户端发送包 " << packet_index+1 << " 失败" << std::endl;
+        }
+    }
+    
+    return sent_success;
+}
+
+void PcapClient::switchToReceiveMode(int next_packet_index) {
+    SharedMemoryData* shm_data = shm_manager_->getData();
+    if (!shm_data) return;
+    
+    std::cout << "客户端切换到接收态，等待服务端发送包 " << next_packet_index << std::endl;
+    
+    // 设置客户端为接收态
+    shm_data->client_in_receive_mode.store(true);
+    shm_data->waiting_for_peer.store(true);
+}
+
+void PcapClient::waitForServerPacket(int packet_index) {
+    SharedMemoryData* shm_data = shm_manager_->getData();
+    if (!shm_data) return;
+    
+    // 简化逻辑：只等待next_packet_index更新到下一个包
+    auto start_time = std::chrono::steady_clock::now();
+    const int timeout_ms = 2000; // 2秒超时
+    
+    while (!interrupted_.load()) {
+        // 检查服务端是否已经处理完当前包
+        if (shm_data->next_packet_index.load() > packet_index) {
+            break;
+        }
+        
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - start_time);
+        if (elapsed.count() >= timeout_ms) {
+            std::cout << "等待服务端处理包 " << packet_index << " 超时" << std::endl;
+            break;
+        }
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+}
+
+int PcapClient::calculateDelayToNextPacket(const PacketInfo& current_packet, const PacketInfo& next_packet) {
+    // 计算时间差（微秒）
+    uint64_t time_diff_us = next_packet.timestamp_us - current_packet.timestamp_us;
+    
+    // 根据回放模式调整延迟
+    switch (config_.mode) {
+        case ClientReplayMode::OriginalSpeed:
+            return static_cast<int>(time_diff_us / 1000); // 转换为毫秒
+            
+        case ClientReplayMode::FixedInterval:
+            return config_.fixedIntervalMs;
+            
+        case ClientReplayMode::FloatingOriginal: {
+            double base_delay = time_diff_us / 1000.0;
+            double variation = base_delay * config_.floatPercent;
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_real_distribution<> dis(-variation, variation);
+            return static_cast<int>(base_delay + dis(gen));
+        }
+        
+        case ClientReplayMode::ConstantRate:
+            // 基于目标流量计算延迟
+            if (config_.targetBytesPerSec > 0) {
+                double delay_sec = static_cast<double>(current_packet.packet_size) / config_.targetBytesPerSec;
+                return static_cast<int>(delay_sec * 1000);
+            }
+            return 0;
+            
+        default:
+            return static_cast<int>(time_diff_us / 1000);
+    }
 }
 
 bool PcapClient::synchronizedSendPacket(const PacketInfo& packet_info, int packet_index) {

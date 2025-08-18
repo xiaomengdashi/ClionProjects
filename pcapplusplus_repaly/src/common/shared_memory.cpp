@@ -7,6 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <errno.h>
 
 // 静态成员定义
 const std::string SharedMemoryManager::SHARED_MEMORY_NAME = "/pcap_replay_shm";

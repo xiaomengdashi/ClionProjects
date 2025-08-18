@@ -194,10 +194,45 @@ private:
     bool waitForClient(int timeout_ms = 30000);
     
     /**
+     * 等待轮到服务端发送
+     * @param packet_index 包索引
+     * @return 成功返回true
+     */
+    bool waitForServerTurn(int packet_index);
+    
+    /**
+     * 发送服务端包
+     * @param packet_info 包信息
+     * @param packet_index 包索引
+     * @return 发送成功返回true
+     */
+    bool sendServerPacket(const PacketInfo& packet_info, int packet_index);
+    
+    /**
+     * 切换到接收态，等待客户端发送
+     * @param next_packet_index 下一个包的索引
+     */
+    void switchToReceiveMode(int next_packet_index);
+    
+    /**
+     * 等待客户端处理包
+     * @param packet_index 包索引
+     */
+    void waitForClientPacket(int packet_index);
+    
+    /**
+     * 计算到下一包的延迟时间
+     * @param current_packet 当前包
+     * @param next_packet 下一包
+     * @return 延迟时间（毫秒）
+     */
+    int calculateDelayToNextPacket(const PacketInfo& current_packet, const PacketInfo& next_packet);
+    
+    /**
      * 同步发送包（与客户端协调）
      * @param packet_info 包信息
      * @param packet_index 包索引
-     * @return 成功返回true
+     * @return 发送成功返回true
      */
     bool synchronizedSendPacket(const PacketInfo& packet_info, int packet_index);
     

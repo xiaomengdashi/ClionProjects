@@ -24,6 +24,13 @@ struct SharedMemoryData {
     std::atomic<uint64_t> last_send_time_us;    // 最后发送时间(微秒)
     std::atomic<bool> ignore_next_received;     // 忽略下一个收到的包
     
+    // 交替发送状态
+    std::atomic<int> current_sender;            // 当前发送方 (0=客户端, 1=服务端)
+    std::atomic<bool> client_in_receive_mode;   // 客户端处于接收态
+    std::atomic<bool> server_in_receive_mode;   // 服务端处于接收态
+    std::atomic<int> next_packet_index;         // 下一个要发送的包索引
+    std::atomic<bool> waiting_for_peer;         // 等待对方发送
+    
     // 统计信息
     std::atomic<int> client_sent_count;     // 客户端发送计数
     std::atomic<int> server_sent_count;     // 服务端发送计数
@@ -49,6 +56,13 @@ struct SharedMemoryData {
         server_packet_received.store(false);
         last_send_time_us.store(0);
         ignore_next_received.store(false);
+        
+        // 初始化交替发送状态
+        current_sender.store(0);  // 从客户端开始
+        client_in_receive_mode.store(false);
+        server_in_receive_mode.store(false);
+        next_packet_index.store(0);
+        waiting_for_peer.store(false);
         
         client_sent_count.store(0);
         server_sent_count.store(0);
