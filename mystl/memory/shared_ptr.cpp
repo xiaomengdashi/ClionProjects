@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 template<typename T>
 class RefCount {
@@ -42,6 +43,12 @@ public:
         }
     }
 
+    // 移动构造函数
+    my_shared_ptr(my_shared_ptr&& other) noexcept : ptr_(other.ptr_), ref_count_(other.ref_count_) {
+        other.ptr_ = nullptr;
+        other.ref_count_ = nullptr;
+    }
+
     // 拷贝赋值运算符
     my_shared_ptr& operator=(const my_shared_ptr& other) {
         if (this != &other) {
@@ -54,6 +61,21 @@ public:
             if (ref_count_) {
                 ref_count_->addRef();
             }
+        }
+        return *this;
+    }
+
+    // 移动赋值运算符
+    my_shared_ptr& operator=(my_shared_ptr&& other) noexcept {
+        if (this != &other) {
+            if (ref_count_ && ref_count_->release() == 0) {
+                delete ptr_;
+                delete ref_count_;
+            }
+            ptr_ = other.ptr_;
+            ref_count_ = other.ref_count_;
+            other.ptr_ = nullptr;
+            other.ref_count_ = nullptr;
         }
         return *this;
     }
@@ -90,3 +112,30 @@ private:
     T* ptr_;
     RefCount<T>* ref_count_;
 };
+
+// 测试函数
+void test_myshared_ptr()
+{
+    std::cout << "=======test_myshared_ptr========" << std::endl;
+    my_shared_ptr<int> p1(new int(10));
+    std::cout << *p1.get() << std::endl;
+    std::cout<< p1.use_count() <<std::endl;
+
+    my_shared_ptr<int> p2 = p1;
+    my_shared_ptr<int> p3;
+    p3 = p2;
+    my_shared_ptr<int> p4 = std::move(p3);
+    std::cout<< p4.use_count() <<std::endl;
+
+    my_shared_ptr<int> p5(new int(100));
+    p5 = std::move(p4);
+    std::cout<< p5.use_count() <<std::endl;
+
+    my_shared_ptr<std::string> s1(new  std::string("hell0000000000000000o"));
+    std::cout << s1->size() << std::endl;
+}
+
+int main() {
+    test_myshared_ptr();
+    return 0;
+}

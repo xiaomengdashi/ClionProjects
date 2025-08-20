@@ -1,9 +1,6 @@
-#pragma once
-
-
 #include <iostream>
 #include <memory>
-
+#include <vector>
 
 template<typename T>
 class MyAllocator {
@@ -38,3 +35,19 @@ bool operator!=(const MyAllocator<T>&, const MyAllocator<U>&) noexcept {
     return false;
 }
 
+// 测试函数
+void test_myallocator() {
+    std::vector<int, MyAllocator<int>> vec;
+    for (int i = 0; i < 10; ++i) {
+        vec.push_back(i);
+    }
+    for (int i : vec) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+}
+
+int main() {
+    test_myallocator();
+    return 0;
+}

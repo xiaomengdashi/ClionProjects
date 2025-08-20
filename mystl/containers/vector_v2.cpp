@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 #include <stdexcept>
 
@@ -164,3 +163,34 @@ private:
         }
     }
 };
+
+// 测试函数
+void test_vector() {
+    std::cout << "=======test_vector========" << std::endl;
+    MyVector<int> vec;
+    vec.push_back(1);
+    vec.push_back(2);
+    vec.push_back(3);
+    vec.push_back(4);
+
+    std::cout << "Size: " << vec.size() << std::endl;
+    std::cout << "Capacity: " << vec.capacity() << std::endl;
+
+    for (size_t i = 0; i < vec.size(); i++) {
+        std::cout << "vec[" << i << "] = " << vec[i] << std::endl;
+    }
+
+    std::cout << "Using iterator:" << std::endl;
+    for (auto it = vec.begin(); it != vec.end(); ++it) {
+        std::cout << *it << " ";
+    }
+    std::cout << std::endl;
+
+    vec.pop_back();
+    std::cout << "Size after pop_back: " << vec.size() << std::endl;
+}
+
+int main() {
+    test_vector();
+    return 0;
+}

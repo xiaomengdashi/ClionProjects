@@ -1,6 +1,7 @@
-
 #include <vector>
 #include <algorithm>
+#include <iostream>
+#include <numeric>
 
 void _display(std::random_access_iterator_tag) {
     std::cout << "Random Access Iterator" << std::endl;
@@ -30,13 +31,12 @@ template <typename T>
 void display(T itr)
 {
     typename std::iterator_traits<T>::iterator_category cat;
-
     _display(cat);
 }
 
-
-inline void algorithm_test()
+void algorithm_test()
 {
+    std::cout << "=======algorithm_test========" << std::endl;
     using namespace std;
     vector<int> vec;
     vec.push_back(1);
@@ -47,26 +47,43 @@ inline void algorithm_test()
     vec.push_back(6);
     vec.push_back(7);
 
-
-
-
-
+    std::cout << "Vector contents:" << std::endl;
     for (auto it = vec.begin(); it != vec.end(); ++it)
     {
-        std::cout << *it << std::endl;
+        std::cout << *it << " ";
     }
+    std::cout << std::endl;
 
+    std::cout << "Iterator type: ";
     display(std::vector<int>::iterator());
 
-    std::cout << std::accumulate(vec.begin(), vec.end(), 0) << std::endl;
+    std::cout << "Sum of elements: " << std::accumulate(vec.begin(), vec.end(), 0) << std::endl;
 
+    std::cout << "Using for_each:" << std::endl;
     std::for_each(vec.begin(), vec.end(), [](int i)
       {
-            std::cout << i << std::endl;
+            std::cout << i << " ";
       });
+    std::cout << std::endl;
 
-    std::cout << std::count_if(vec.begin(), vec.end(), [](int i) { return i % 3 == 0; }) << std::endl;
+    std::cout << "Count of elements divisible by 3: " << std::count_if(vec.begin(), vec.end(), [](int i) { return i % 3 == 0; }) << std::endl;
+    
     std::sort(vec.begin(), vec.end());
+    std::cout << "After sort: ";
+    for (int i : vec) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+    
     std::reverse(vec.begin(), vec.end());
+    std::cout << "After reverse: ";
+    for (int i : vec) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
 }
 
+int main() {
+    algorithm_test();
+    return 0;
+}
