@@ -1,0 +1,23 @@
+[Unit]
+Description=HTTP Server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+PIDFile=/var/run/httpserver.pid
+ExecStart=/usr/local/bin/httpserver
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+User=www-data
+Group=www-data
+
+# 进程限制
+LimitNOFILE=65536
+
+# 环境变量
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=multi-user.target
