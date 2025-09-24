@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频聊天室</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 登录界面 -->
+        <div id="loginPanel" class="panel">
+            <h1>视频聊天室</h1>
+            <div class="login-form">
+                <input type="text" id="roomIdInput" placeholder="请输入房间号" maxlength="10">
+                <button id="joinButton" onclick="joinRoom()">加入房间</button>
+            </div>
+        </div>
+
+        <!-- 视频聊天界面 -->
+        <div id="chatPanel" class="panel" style="display: none;">
+            <div class="header">
+                <h2>房间号: <span id="currentRoomId"></span></h2>
+                <div class="user-info">
+                    <span id="currentUserName"></span>
+                    <button onclick="leaveRoom()" class="leave-btn">离开房间</button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- 视频区域 -->
+                <div class="video-area">
+                    <!-- 全屏视频显示区 -->
+                    <div class="fullscreen-video-container" id="fullscreenVideoContainer" style="display: none;">
+                        <div class="fullscreen-video-wrapper">
+                            <video id="fullscreenVideo" autoplay playsinline></video>
+                            <div class="fullscreen-controls">
+                                <button class="fullscreen-close" onclick="exitFullscreenVideo()">
+                                    <span class="icon">✕</span>
+                                </button>
+                                <div class="fullscreen-label" id="fullscreenLabel">用户名</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 普通视频网格 -->
+                    <div class="video-container" id="videoContainer">
+                        <!-- 本地视频 -->
+                        <div class="video-wrapper local-video-wrapper">
+                            <video id="localVideo" autoplay muted playsinline></video>
+                            <div class="video-label">我</div>
+                            <div class="video-controls">
+                                <button class="expand-btn" onclick="expandVideo('localVideo', '我')" title="放大视频">
+                                    <span class="icon">🔍</span>
+                                </button>
+                                <button id="muteButton" onclick="toggleMute()">
+                                    <span class="icon">🎤</span>
+                                </button>
+                                <button id="cameraButton" onclick="toggleCamera()">
+                                    <span class="icon">📷</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 远程视频容器 -->
+                        <div id="remoteVideos" class="remote-videos">
+                            <!-- 动态添加远程视频 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 聊天和用户列表区域 -->
+                <div class="sidebar">
+                    <!-- 用户列表 -->
+                    <div class="user-list">
+                        <h3>在线用户 <span class="user-count" id="userCount">0</span></h3>
+                        <ul id="userList"></ul>
+                    </div>
+                    
+                    <!-- 聊天区域 -->
+                    <div class="chat-area">
+                        <div class="chat-header">
+                            <h3>聊天室</h3>
+                            <div class="chat-tabs">
+                                <button class="tab-button active" onclick="switchTab('messages')">消息</button>
+                                <button class="tab-button" onclick="switchTab('files')">文件</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 消息标签页 -->
+                        <div class="tab-content" id="messagesTab">
+                            <div class="chat-messages" id="chatMessages">
+                                <!-- 消息列表 -->
+                            </div>
+                            
+                            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                                <span></span>
+                            </div>
+                            
+                            <div class="chat-input">
+                                <input type="text" id="messageInput" placeholder="输入消息..." maxlength="500">
+                                <button id="fileUploadButton" onclick="triggerFileUpload()" title="上传文件">📎</button>
+                                <button id="sendButton" onclick="sendMessage()">发送</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 文件标签页 -->
+                        <div class="tab-content" id="filesTab" style="display: none;">
+                            <div class="file-upload-area">
+                                <div class="upload-zone" id="uploadZone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)">
+                                    <div class="upload-icon">📁</div>
+                                    <div class="upload-text">
+                                        <p>拖拽文件到此处或</p>
+                                        <button onclick="triggerFileUpload()">选择文件</button>
+                                    </div>
+                                    <div class="upload-limit">最大10MB，支持常见文件格式</div>
+                                </div>
+                                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)" multiple>
+                            </div>
+                            
+                            <div class="file-list" id="fileList">
+                                <div class="file-list-header">房间文件</div>
+                                <div class="file-items" id="fileItems">
+                                    <!-- 文件列表 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上传进度对话框 -->
+    <div class="upload-progress" id="uploadProgress">
+        <div class="progress-text">正在上传文件...</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-percentage" id="progressPercentage">0%</div>
+    </div>
+
+    <script src="js/webrtc.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        // 全局视频放大功能
+        function expandVideo(videoId, userName) {
+            if (typeof window.chatApp !== 'undefined' && window.chatApp.expandVideo) {
+                window.chatApp.expandVideo(videoId, userName);
+            }
+        }
+        
+        function exitFullscreenVideo() {
+            if (typeof window.chatApp !== 'undefined' && window.chatApp.exitFullscreenVideo) {
+                window.chatApp.exitFullscreenVideo();
+            }
+        }
+        
+        function switchTab(tabName) {
+            if (typeof window.chatApp !== 'undefined' && window.chatApp.switchTab) {
+                window.chatApp.switchTab(tabName);
+            }
+        }
+    </script>
+</body>
+</html> 
