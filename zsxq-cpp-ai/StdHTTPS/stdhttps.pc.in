@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: @PROJECT_NAME@
+Description: 学习版HTTP/HTTPS协议栈实现
+Version: @PROJECT_VERSION@
+Requires: openssl
+Libs: -L${libdir} -lstdhttps
+Libs.private: -lssl -lcrypto -lpthread
+Cflags: -I${includedir}
