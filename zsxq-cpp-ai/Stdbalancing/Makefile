@@ -6,9 +6,9 @@ CXX = g++
 CXXFLAGS = -std=c++11 -Wall -Wextra -O2 -pthread
 
 # 源文件和目标文件
-SOURCES = main.cpp
-PERF_SOURCES = performance_test.cpp
-HEADERS = Server.h LoadBalancer.h RoundRobinBalancer.h ConsistentHashBalancer.h LeastConnectionsBalancer.h
+SOURCES = examples/main.cpp
+PERF_SOURCES = examples/performance_test.cpp
+HEADERS = include/server/Server.h include/balancer/LoadBalancer.h include/balancer/RoundRobinBalancer.h include/balancer/ConsistentHashBalancer.h include/balancer/LeastConnectionsBalancer.h
 TARGET = load_balancer_demo
 PERF_TARGET = performance_test
 
@@ -18,13 +18,13 @@ all: $(TARGET) $(PERF_TARGET)
 # 编译规则
 $(TARGET): $(SOURCES) $(HEADERS)
 	@echo "正在编译负载均衡算法学习案例..."
-	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) -Iinclude $(SOURCES) -o $(TARGET)
 	@echo "编译完成！运行 ./$(TARGET) 查看演示"
 
 # 编译性能测试程序
 $(PERF_TARGET): $(PERF_SOURCES) $(HEADERS)
 	@echo "正在编译性能测试程序..."
-	$(CXX) $(CXXFLAGS) $(PERF_SOURCES) -o $(PERF_TARGET)
+	$(CXX) $(CXXFLAGS) -Iinclude $(PERF_SOURCES) -o $(PERF_TARGET)
 	@echo "性能测试程序编译完成！运行 ./$(PERF_TARGET) 进行性能测试"
 
 # 运行程序

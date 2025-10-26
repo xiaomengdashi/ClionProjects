@@ -7,7 +7,7 @@
 #ifndef ROUNDROBINBALANCER_H
 #define ROUNDROBINBALANCER_H
 
-#include "LoadBalancer.h"
+#include "balancer/LoadBalancer.h"
 #include <atomic>
 
 /**

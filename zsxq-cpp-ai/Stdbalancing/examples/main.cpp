@@ -15,11 +15,11 @@
 #include <queue>
 #include <condition_variable>
 
-#include "Server.h"
-#include "LoadBalancer.h"
-#include "RoundRobinBalancer.h"
-#include "ConsistentHashBalancer.h"
-#include "LeastConnectionsBalancer.h"
+#include "server/Server.h"
+#include "balancer/LoadBalancer.h"
+#include "balancer/RoundRobinBalancer.h"
+#include "balancer/ConsistentHashBalancer.h"
+#include "balancer/LeastConnectionsBalancer.h"
 
 // 控制台颜色输出
 #define COLOR_RESET   "\033[0m"

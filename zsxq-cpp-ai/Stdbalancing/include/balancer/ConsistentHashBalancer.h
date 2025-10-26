@@ -7,7 +7,7 @@
 #ifndef CONSISTENTHASHBALANCER_H
 #define CONSISTENTHASHBALANCER_H
 
-#include "LoadBalancer.h"
+#include "balancer/LoadBalancer.h"
 #include <map>
 #include <functional>
 #include <sstream>

@@ -7,7 +7,7 @@
 #ifndef LEASTCONNECTIONSBALANCER_H
 #define LEASTCONNECTIONSBALANCER_H
 
-#include "LoadBalancer.h"
+#include "balancer/LoadBalancer.h"
 #include <algorithm>
 #include <limits>
 #include <random>

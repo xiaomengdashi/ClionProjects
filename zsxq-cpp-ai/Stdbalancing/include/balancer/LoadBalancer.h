@@ -7,7 +7,7 @@
 #ifndef LOADBALANCER_H
 #define LOADBALANCER_H
 
-#include "Server.h"
+#include "server/Server.h"
 #include <vector>
 #include <memory>
 #include <mutex>

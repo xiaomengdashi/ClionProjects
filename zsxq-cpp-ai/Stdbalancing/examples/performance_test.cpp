@@ -13,11 +13,11 @@
 #include <random>
 #include <map>
 
-#include "Server.h"
-#include "LoadBalancer.h"
-#include "RoundRobinBalancer.h"
-#include "ConsistentHashBalancer.h"
-#include "LeastConnectionsBalancer.h"
+#include "server/Server.h"
+#include "balancer/LoadBalancer.h"
+#include "balancer/RoundRobinBalancer.h"
+#include "balancer/ConsistentHashBalancer.h"
+#include "balancer/LeastConnectionsBalancer.h"
 
 /**
  * @brief 性能测试结果统计
