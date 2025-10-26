@@ -1,8 +1,0 @@
-BasedOnStyle: LLVM
-IndentWidth: 4
-UseTab: Never
-ColumnLimit: 100
-BreakBeforeBraces: Allman
-AllowShortFunctionsOnASingleLine: None
-AllowShortIfStatementsOnASingleLine: None
-AllowShortLoopsOnASingleLine: None
