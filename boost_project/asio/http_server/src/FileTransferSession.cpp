@@ -10,10 +10,15 @@ FileTransferSession::~FileTransferSession() {
 }
 
 void FileTransferSession::StartDownloadRealFile(const std::string &file_path) {
+    // 构建文件完整路径（文件在bin目录下）
+    std::string full_path = "bin/";
+    full_path += file_path;
+    
     // 打开文件
-    std::ifstream file(file_path, std::ios::binary | std::ios::ate);
+    std::ifstream file(full_path, std::ios::binary | std::ios::ate);
     if (!file) {
-        SendResponse("HTTP/1.1 404 Not Found\r\n\r\n");
+        std::cerr << "File not found: " << full_path << std::endl;
+        SendResponse("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nFile not found: " + file_path);
         return;
     }
 
@@ -21,10 +26,11 @@ void FileTransferSession::StartDownloadRealFile(const std::string &file_path) {
     auto file_size = file.tellg();
     file.seekg(0);
 
-    // 发送HTTP头
+    // 发送HTTP头（添加Content-Disposition以触发下载）
     std::ostringstream header;
     header << "HTTP/1.1 200 OK\r\n"
            << "Content-Type: application/octet-stream\r\n"
+           << "Content-Disposition: attachment; filename=\"" << file_path << "\"\r\n"
            << "Content-Length: " << file_size << "\r\n\r\n";
 
     asio::async_write(socket_, asio::buffer(header.str()),

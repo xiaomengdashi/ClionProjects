@@ -18,6 +18,7 @@ private:
     void HandleDownload(const std::string &path);
     void HandleFileDownload(const std::string &filename);
     void HandleVirtualFileDownload(size_t file_size);
+    void HandleRootPath();
 
 private:
     std::string path_;
