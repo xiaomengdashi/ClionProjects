@@ -1,5 +1,7 @@
 #include "HttpPostSession.h"
 
+#include <iostream>
+
 HttpPostSession::HttpPostSession(tcp::socket socket, std::size_t content_length)
     : HttpSessionBase(std::move(socket)), content_length_(content_length) {}
 
@@ -37,8 +39,8 @@ void HttpPostSession::ReadBody() {
     // 增大缓冲区大小
     socket_.async_read_some(
         request_buffer_.prepare(1024),
-        [this, self](boost::system::error_code ec,
-                     std::size_t bytes_transferred) {
+        [this, self](const boost::system::error_code& ec,
+                     const std::size_t bytes_transferred) {
             if (ec) {
                 // 处理错误
                 output_file_.close();

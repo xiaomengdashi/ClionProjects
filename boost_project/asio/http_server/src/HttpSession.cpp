@@ -46,10 +46,10 @@ void HttpSession::ReadRequestHeader() {
 
             // 根据请求方法创建子会话
             if (request_line.find("POST") != std::string::npos) {
-                auto post_session = std::make_shared<HttpPostSession>(std::move(socket_), content_length);
+                const auto post_session = std::make_shared<HttpPostSession>(std::move(socket_), content_length);
                 post_session->Start();
             } else if (request_line.find("GET") != std::string::npos) {
-                auto get_session = std::make_shared<HttpGetSession>(std::move(socket_), path);
+                const auto get_session = std::make_shared<HttpGetSession>(std::move(socket_), path);
                 get_session->Start();
             } else {
                 SendResponse("HTTP/1.1 405 Method Not Allowed\r\n\r\n");

@@ -66,15 +66,15 @@ void FileTransferSession::StartDownloadVirtualFile(const size_t file_size) {
            << "Content-Disposition: attachment; "
               "filename=\"virtual_file.bin\"\r\n\r\n";
     auto header_str = std::make_shared<std::string>(header.str());
-    auto header_len = header_str->size();
+    const auto header_len = header_str->size();
 
     // 生成首个数据分片
-    size_t chunk_size = 1 * 1024 - header_len; // 默认头小于1KB，避免分片问题
+    const size_t chunk_size = 1 * 1024 - header_len; // 默认头小于1KB，避免分片问题
     size_t first_chunk = std::min(chunk_size, file_size_);
     auto data = std::make_shared<std::vector<char>>(first_chunk, 'a');
 
     // 合并头和首块数据
-    std::vector<asio::const_buffer> buffers{asio::buffer(*header_str), asio::buffer(*data)};
+    const std::vector<asio::const_buffer> buffers{asio::buffer(*header_str), asio::buffer(*data)};
 
     asio::async_write(socket_, buffers,
         [this, self = shared_from_this(), header_str, data,
@@ -161,7 +161,7 @@ void FileTransferSession::GracefulShutdown() {
 
     // 2. 继续读取客户端数据（直到收到FIN）
     asio::async_read(socket_, asio::dynamic_buffer(dummy_buffer_),
-        [this, self](boost::system::error_code ec, size_t) {
+        [this, self](const boost::system::error_code& ec, size_t) {
             std::cout << "Received data" << std::endl;
             if (ec == asio::error::eof) {
                 // 3. 安全关闭连接

@@ -1,9 +1,11 @@
 #include "HttpSessionBase.h"
 
+#include <iostream>
+
 HttpSessionBase::HttpSessionBase(tcp::socket socket)
     : socket_(std::move(socket)) {}
 
-HttpSessionBase::~HttpSessionBase() {}
+HttpSessionBase::~HttpSessionBase() = default;
 
 void HttpSessionBase::Start() {
     socket_.set_option(tcp::no_delay(true));

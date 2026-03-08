@@ -15,7 +15,7 @@ public:
     ~FileTransferSession();
 
     void StartDownloadRealFile(const std::string &file_path);
-    void StartDownloadVirtualFile(const size_t file_size);
+    void StartDownloadVirtualFile(size_t file_size);
 
 private:
     void SendFileChunk(std::ifstream file, std::streamsize file_size);

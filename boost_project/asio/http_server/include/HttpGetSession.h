@@ -6,7 +6,7 @@
 #include "FileTransferSession.h"
 #include "UrlDecode.hpp"
 
-class HttpGetSession : public HttpSessionBase {
+class HttpGetSession final : public HttpSessionBase {
 public:
     explicit HttpGetSession(tcp::socket socket, const std::string &path);
     ~HttpGetSession() override;

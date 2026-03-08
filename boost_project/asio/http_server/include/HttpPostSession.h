@@ -12,7 +12,7 @@ using tcp = asio::ip::tcp;
 class HttpPostSession : public HttpSessionBase {
 public:
     explicit HttpPostSession(tcp::socket socket, std::size_t content_length);
-    ~HttpPostSession();
+    ~HttpPostSession() override;
 
 protected:
     void HandleRequest() override;
@@ -20,7 +20,6 @@ protected:
 private:
     void ReadBody();
 
-private:
     std::ofstream output_file_;
     std::filesystem::path temp_file_path_;
     size_t content_length_ = 0;

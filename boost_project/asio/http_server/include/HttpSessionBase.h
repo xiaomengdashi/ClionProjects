@@ -2,7 +2,6 @@
 #define BOOST_DEMO_HTTPSESSIONBASE_H
 
 #include <boost/asio.hpp>
-#include <iostream>
 #include <memory>
 
 namespace asio = boost::asio;
@@ -20,7 +19,6 @@ protected:
     void SendResponse(const std::string &response);
     void GracefulShutdown();
 
-protected:
     tcp::socket socket_;
     asio::streambuf request_buffer_;
     std::string dummy_buffer_;
